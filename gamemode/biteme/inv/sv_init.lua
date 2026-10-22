@@ -78,7 +78,6 @@ function AddItemsToGmodCount(ply, name, dur, wep, amount)
 end
 
 function AddItemsToGmod(ply, name, dur, wep, slot)
-    PrintTable(ply.GInv)
     local tbl = {
         id = name,
         dur = dur or 100,
@@ -131,24 +130,45 @@ end)
 net.Receive("grust_RequestInv", function(_, ply) SendInv(ply) end)
 local function DroppableBag(ply, name, count)
     local emptySlot, Slot = GetEmptySlot(ply)
-    ply.GInv[Slot] = nil
     local ent = ents.Create("item_bag")
     ent:SetItemName(name)
     ent:SetSizeItem(count)
     ent:Spawn()
     ent:Activate()
     ent:SetPos(ply:GetEyeTrace().HitPos + ply:GetEyeTrace().HitNormal * 32)
+    local wep = RustOfficial.GetItem(name)
+    ply.GInv[Slot] = nil
+    if wep and wep.weapon then
+        local hasRemaining = false
+        for _, v in pairs(ply.GInv) do
+            if v.id == name then
+                hasRemaining = true
+                break
+            end
+        end
+
+        if not hasRemaining and ply:HasWeapon(wep.weapon) then ply:StripWeapon(wep.weapon) end
+    end
+
+    SendInv(ply)
 end
 
 local function DropItem(ply, from)
     for k, v in pairs(ply.GInv) do
         if k == from then
-            DroppableBag(ply, v.id, v.Count)
+            print(k, from, ply)
             ply.GInv[k] = nil
+            DroppableBag(ply, v.id, v.Count)
         end
     end
 
     SendInv(ply)
+end
+
+function GRUST_GetItemFromID(ply, pos)
+    local weppos = ply.GInv[pos]
+    print(weppos.id)
+    RustOfficial.GetItem(weppos.id).func(ply)
 end
 
 net.Receive("grust_MoveItem", function(_, ply)
@@ -165,6 +185,7 @@ net.Receive("grust_MoveItem", function(_, ply)
         return
     end
 
+    GRUST_GetItemFromID(ply, from)
     inv[from], inv[to] = inv[to], inv[from] -- swap (works for empty targets too)
     SendInv(ply)
 end)
@@ -173,4 +194,24 @@ hook.Add("PlayerSpawn", "sendinv", function(ply)
     ply.GInv = nil
     ply.GInv = {}
     AddItemsToGmod(ply, "Rock", math.random(50, 60), "rust_rock", 31)
+    ply:Give("rust_hands")
+    --AddItemsToGmod(ply, "Rock", math.random(50, 60), "rust_rock", 32)
+end)
+
+util.AddNetworkString("gRustSelectWep")
+net.Receive("gRustSelectWep", function(_, ply)
+    local num = net.ReadFloat()
+    if num < 1 or num > 6 or num % 1 ~= 0 then return end
+    local slotID = 30 + num
+    local item = ply.GInv and ply.GInv[slotID]
+    if not item then
+        ply:SelectWeapon("rust_hands")
+        print(num, "hands")
+        return
+    end
+
+    local def = RustOfficial.GetItem(item.id)
+    if not def or not def.weapon then return end
+    if not ply:HasWeapon(def.weapon) then def.func(ply) end
+    if ply:HasWeapon(def.weapon) then ply:SelectWeapon(def.weapon) end
 end)

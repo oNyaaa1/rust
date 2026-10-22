@@ -181,3 +181,14 @@ hook.Add("ScoreboardHide", "Scoreboard_Close", function()
     if IsValid(GRUST_TEST) then GRUST_TEST:Remove() end
     if IsValid(GRUST_HOTBAR) then GRUST_HOTBAR:SetMouseInputEnabled(false) end
 end)
+
+hook.Add("PlayerBindPress", "Bindpressgturst", function(ply, bind, pressed)
+    if not pressed then return end
+    bind = string.lower(bind)
+    local num = tonumber(string.match(bind, "^slot(%d+)$"))
+    if not num or num < 1 or num > 6 then return end
+    net.Start("gRustSelectWep")
+    net.WriteFloat(num)
+    net.SendToServer()
+    return true
+end)
