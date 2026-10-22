@@ -34,17 +34,17 @@ if SERVER then
 	function ENT:OnRemove()
 	end
 
-	function ENT:SetItemSlot(name)
-		self.ItemSlot = name
-	end
-
 	function ENT:SetItemName(name)
 		self.Item = name
 	end
 
+	function ENT:SetSizeItem(loot)
+		self.Sizez = loot
+	end
+
 	function ENT:Use(btn, ply)
 		local item = RustOfficial.GetItem(self.Item)
-		AddItemsToGmodeS(ply, item.name, math.random(50, 60), item.weapon, self.ItemSlot)
+		AddItemsToGmodeS(ply, item.name, math.random(50, 60), item.weapon, self.Sizez)
 		self:Remove()
 	end
 

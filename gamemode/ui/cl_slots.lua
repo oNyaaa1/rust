@@ -5,7 +5,8 @@ net.Receive("grust_SyncInv", function()
         if id ~= "" then
             inv[i] = {
                 id = id,
-                dur = net.ReadUInt(7)
+                dur = net.ReadUInt(7),
+                count = net.ReadFloat(),
             }
         end
     end
@@ -56,7 +57,7 @@ function PANEL:MoveItem(item, target)
     net.SendToServer()
 end
 
-function PANEL:AddItem(slotID, itemID, dur)
+function PANEL:AddItem(slotID, itemID, dur, count)
     local slot = self.Slots[slotID]
     local def = RustOfficial.GetItem(itemID)
     if not IsValid(slot) or not def then return end
@@ -79,7 +80,8 @@ function PANEL:AddItem(slotID, itemID, dur)
             surface.DrawRect(cx, pad, cw, h - pad * 2)
         end
 
-        draw.SimpleTextOutlined(def.name, "DermaDefault", cx + cw / 2, h - 6, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM, 1, color_black)
+        draw.SimpleTextOutlined(def.name, "DermaDefault", cx + cw / 2, h - 12, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM, 1, color_black)
+        draw.SimpleTextOutlined(count, "DermaDefault", cx + cw / 2, h - 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM, 1, color_black)
         -- durability bar, left edge, fills from the bottom
         surface.SetDrawColor(0, 0, 0, 200)
         surface.DrawRect(0, 0, barW, h)
@@ -105,7 +107,7 @@ function PANEL:SetInventory(inv)
     end
 
     for slotID, it in pairs(inv) do
-        self:AddItem(slotID, it.id, it.dur)
+        self:AddItem(slotID, it.id, it.dur, it.count)
     end
 end
 

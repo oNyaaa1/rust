@@ -14,6 +14,7 @@ local function SendInv(ply)
         if it then
             net.WriteString(it.id)
             net.WriteUInt(math.Clamp(math.floor(it.dur), 0, 100), 7) -- 7 bits holds 0-127
+            net.WriteFloat(it.Count)
         else
             net.WriteString("")
         end
@@ -22,13 +23,13 @@ local function SendInv(ply)
     net.Send(ply)
 end
 
-function AddItemsToGmodeS(ply, name, dur, wep)
+function AddItemsToGmodeS(ply, name, dur, wep, size)
     local emptySlot, Slot = GetEmptySlot(ply)
     local tbl = {
         id = name,
         dur = dur or 100,
         weapon = wep ~= nil and wep or nil,
-        Count = 1,
+        Count = size,
     }
 
     RustOfficial.GetItem(name).func(ply)
@@ -126,12 +127,12 @@ concommand.Add("grust_giveitem", function(ply, _, args)
 end)
 
 net.Receive("grust_RequestInv", function(_, ply) SendInv(ply) end)
-local function DroppableBag(ply, name)
+local function DroppableBag(ply, name, count)
     local emptySlot, Slot = GetEmptySlot(ply)
     ply.GInv[Slot] = nil
     local ent = ents.Create("item_bag")
     ent:SetItemName(name)
-    ent:SetItemSlot(Slot)
+    ent:SetSizeItem(count)
     ent:Spawn()
     ent:Activate()
     ent:SetPos(ply:GetEyeTrace().HitPos + ply:GetEyeTrace().HitNormal * 32)
@@ -140,7 +141,8 @@ end
 local function DropItem(ply, from)
     for k, v in pairs(ply.GInv) do
         if k == from then
-            DroppableBag(ply, v.id)
+            print(v.id,v.Count)
+            DroppableBag(ply, v.id, v.Count)
             ply.GInv[k] = nil
         end
     end
