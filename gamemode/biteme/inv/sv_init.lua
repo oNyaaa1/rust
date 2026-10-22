@@ -8,6 +8,7 @@ end
 
 local function SendInv(ply)
     local inv = GetInv(ply)
+    if inv == nil then return end
     net.Start("grust_SyncInv")
     for i = 1, SLOTS do
         local it = inv[i]
