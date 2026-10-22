@@ -46,16 +46,18 @@ function GetEmptySlot(ply)
 end
 
 function FindWood(ply, item)
-    local emptySlot, Slot = GetEmptySlot(ply)
     local max = RustOfficial.GetItem(item).Max
     local maxin = 1
     for k, v in pairs(ply.GInv) do
         if v.id == item and v.Count < max then
             maxin = k
+            break
         elseif v.id == item and v.Count >= max then
+            local emptySlot, Slot = GetEmptySlot(ply)
             maxin = Slot
         end
     end
+    print(maxin,max)
     return maxin
 end
 
@@ -63,12 +65,12 @@ function AddItemsToGmodCount(ply, name, dur, wep, amount)
     local max = RustOfficial.GetItem(name).Max
     local woodSlot = FindWood(ply, "Wood")
     local count = ply.GInv[woodSlot] ~= nil and ply.GInv[woodSlot].Count or 0
-    count = count + math.Clamp(amount, 0, max)
+    count = count + amount
     local tbl = {
         id = name,
         dur = dur or 100,
         weapon = wep ~= nil and wep or nil,
-        Count = count,
+        Count = math.Clamp(count, 0, max),
     }
 
     ply.GInv[woodSlot] = tbl
@@ -141,7 +143,7 @@ end
 local function DropItem(ply, from)
     for k, v in pairs(ply.GInv) do
         if k == from then
-            print(v.id,v.Count)
+            print(v.id, v.Count)
             DroppableBag(ply, v.id, v.Count)
             ply.GInv[k] = nil
         end
