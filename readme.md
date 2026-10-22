@@ -8,6 +8,6 @@ This is a Work in progress = W.I.P
 
 Required: https://steamcommunity.com/sharedfiles/filedetails/?id=3648406739
 
-![Map](assets/images/rust/_highland0001.jpg)
-![Preview](assets/images/rust/_highland0002.jpg)
+![Map](https://github.com/oNyaaa1/rust/tree/main/assets/images/rust/rust_highland0001.jpg)
+![Preview](https://github.com/oNyaaa1/rust/tree/main/assets/images/rust_highland0002.jpg)
 
