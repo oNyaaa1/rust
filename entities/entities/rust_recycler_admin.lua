@@ -71,7 +71,6 @@ if CLIENT then
 		local dragged = droppedPanels[1] -- panel being dragged
 		local target = self -- slot receiving the drop
 		-- If dropped on a valid slot
-		print(dragged.Weap, target.CodeSortID)
 		if bDoDrop then
 			net.Start("gRustRecycler")
 			net.WriteString(dragged.Weap) -- weapon/item id
