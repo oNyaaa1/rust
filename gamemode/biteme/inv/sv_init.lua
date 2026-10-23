@@ -218,6 +218,7 @@ hook.Add("PlayerSpawn", "sendinv", function(ply)
     ply.GInv = nil
     ply.GInv = {}
     AddItemsToGmod(ply, "Rock", math.random(50, 60), "rust_rock", 31)
+    AddItemsToGmod(ply, "GarageDoor", math.random(50, 60), nil, 32)
     ply:Give("rust_hands")
     ply:SetHealth(math.random(45, 65))
     ply.Food = math.random(60, 80)
@@ -241,7 +242,11 @@ net.Receive("gRustSelectWep", function(_, ply)
     end
 
     local def = RustOfficial.GetItem(item.id)
-    if not def or not def.weapon then return end
+    if not def or not def.weapon then
+        def.func(ply)
+        return
+    end
+
     if not ply:HasWeapon(def.weapon) then def.func(ply) end
     if ply:HasWeapon(def.weapon) then ply:SelectWeapon(def.weapon) end
 end)
