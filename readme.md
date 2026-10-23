@@ -4,7 +4,7 @@ My Community Discord is: https://discord.gg/drz9arvr28
 
 This is a Work in progress = W.I.P
 
-Counter: ![Counter](https://komarev.com/ghpvc/?oNyaaa1)
+Counter: ![](https://komarev.com/ghpvc/?username=oNyaaa1&color=green)
 
 Required: https://steamcommunity.com/sharedfiles/filedetails/?id=3648406739
 
