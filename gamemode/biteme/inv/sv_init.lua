@@ -156,7 +156,6 @@ end
 local function DropItem(ply, from)
     for k, v in pairs(ply.GInv) do
         if k == from then
-            print(k, from, ply)
             ply.GInv[k] = nil
             DroppableBag(ply, v.id, v.Count)
         end
@@ -167,7 +166,6 @@ end
 
 function GRUST_GetItemFromID(ply, pos)
     local weppos = ply.GInv[pos]
-    print(weppos.id)
     RustOfficial.GetItem(weppos.id).func(ply)
 end
 
@@ -219,7 +217,6 @@ net.Receive("gRustSelectWep", function(_, ply)
     local item = ply.GInv and ply.GInv[slotID]
     if not item then
         ply:SelectWeapon("rust_hands")
-        print(num, "hands")
         return
     end
 

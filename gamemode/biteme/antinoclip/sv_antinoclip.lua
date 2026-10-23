@@ -12,4 +12,3 @@ for k, v in pairs(hook.GetTable()) do
 end
 
 hook.Add("PlayerNoClip", "antinoclip", function(ply) return ply:IsAdmin() end)
-print("hi")
