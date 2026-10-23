@@ -19,7 +19,7 @@ function GetCompassDelta(t)
     return delta
 end
 
-hook.Add("HUDPaint", "identifier", function()
+/*hook.Add("HUDPaint", "identifier", function()
     local ply = LocalPlayer()
     if not IsValid(ply) then return end
     local w, h = ScrW(), ScrH()
@@ -31,4 +31,4 @@ hook.Add("HUDPaint", "identifier", function()
     draw.RoundedBox(0, w * 0.50, 0, 50, 40, Color(64, 64, 64, 255))
     draw.DrawText(text2, "DermaDefault", w * 0.512, 0, Color(255, 255, 255, 255), TEXT_ALIGN_LEFT)
     draw.DrawText(getDelta, "DermaDefault", w * 0.512, 15, Color(255, 255, 255, 255), TEXT_ALIGN_LEFT)
-end)
+end)*/
