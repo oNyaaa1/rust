@@ -42,8 +42,8 @@ function SWEP:PrimaryAttack()
 end
 
 local function DroppableBag(ply, name, count, model)
-    local emptySlot, Slot = GetEmptySlot(ply)
-    ply.GInv[31] = nil
+    local emptySlot, Slot = FindItems(ply, name)
+    ply.GInv[Slot] = nil
     local ent = ents.Create("item_bag")
     ent:SetItemName(name)
     ent:SetSizeItem(count)

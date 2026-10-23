@@ -46,6 +46,17 @@ function GetEmptySlot(ply)
     return false, 1
 end
 
+function FindItems(ply, item)
+    local maxin = 1
+    for k, v in pairs(ply.GInv) do
+        if v.id == item then
+            maxin = k
+            break
+        end
+    end
+    return true, maxin
+end
+
 function FindItem(ply, item)
     local max = RustOfficial.GetItem(item).Max
     local maxin = 1
