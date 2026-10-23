@@ -70,7 +70,7 @@ function AddItemsToGmodCount(ply, name, dur, wep, amount)
         id = name,
         dur = dur or 100,
         weapon = wep ~= nil and wep or nil,
-        Count = math.Clamp(count, 0, max),
+        Count = math.Clamp(math.Round(count), 0, max),
     }
 
     ply.GInv[woodSlot] = tbl
@@ -167,6 +167,15 @@ end
 function GRUST_GetItemFromID(ply, pos)
     local weppos = ply.GInv[pos]
     RustOfficial.GetItem(weppos.id).func(ply)
+end
+
+function GRUST_GetItemFromWep(ply, wepID)
+    local weppos = ply.GInv
+    local null = 0
+    for k, v in pairs(weppos) do
+        if wepID == v.id then null = v.Count end
+    end
+    return null
 end
 
 net.Receive("grust_MoveItem", function(_, ply)
