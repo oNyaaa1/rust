@@ -93,9 +93,9 @@ hook.Add("EntityTakeDamage", "TakeWoodDmg", function(ent, dmginfo)
     if MAT[ent:GetMaterialType()] == "MAT_WOOD" then
         if ent.amount == nil then ent.amount = 0 end
         if ent.amount >= #placeHolster then ent.amount = 0 end
-        local math = GRUST_GetItemFromWep(dmginfo_Attk, "Wood")
+        local mathd = GRUST_GetItemFromWep(dmginfo_Attk, "Wood")
         ent.amount = ent.amount + 1
-        if math >= item.Max then ent.amount = 1 end
+        if mathd >= item.Max then ent.amount = 1 end
         AddItemsToGmodCount(dmginfo_Attk, item.name, 100, nil, placeHolster[ent.amount] * multiPlyer[dmginfo_Attk:GetActiveWeapon():GetClass()])
         local maxHP = TREE_MODELS[ent:GetModel()]
         if not ent.treeHealth then ent.treeHealth, ent.treeHits = maxHP, 0 end
