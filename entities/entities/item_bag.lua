@@ -8,7 +8,7 @@ ENT.AdminOnly = false
 ENT.Models = "models/environment/misc/loot_bag.mdl"
 if SERVER then
 	function ENT:Initialize()
-		self:SetModel(self.Models)
+		self:SetModel(self:GetModel() or self.Models)
 		self:PhysicsInit(SOLID_VPHYSICS)
 		self:SetMoveType(MOVETYPE_VPHYSICS)
 		self:SetSolid(SOLID_VPHYSICS)

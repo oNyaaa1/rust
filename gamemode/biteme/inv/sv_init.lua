@@ -6,7 +6,7 @@ local function GetInv(ply)
     return ply.GInv
 end
 
-local function SendInv(ply)
+function SendInv(ply)
     local inv = GetInv(ply)
     if inv == nil then return end
     net.Start("grust_SyncInv")
@@ -190,12 +190,25 @@ net.Receive("grust_MoveItem", function(_, ply)
     SendInv(ply)
 end)
 
+function GM:PlayerSetHandsModel(pl, ent)
+    ent:SetModel("models/player/darky_m/rust/c_arms_human.mdl")
+end
+
+local ModelsP = {"models/player/Group01/male_04.mdl", "models/player/Group01/female_01.mdl", "models/player/Group01/female_05.mdl", "models/player/Group01/female_04.mdl", "models/player/Group01/female_03.mdl", "models/player/Group01/male_03.mdl", "models/player/Group01/male_07.mdl", "models/player/Group01/male_06.mdl", "models/player/Group01/male_01.mdl", "models/player/Group01/male_02.mdl"}
 hook.Add("PlayerSpawn", "sendinv", function(ply)
+    ply:SetModel(ModelsP[math.random(#ModelsP)])
     ply.GInv = nil
     ply.GInv = {}
     AddItemsToGmod(ply, "Rock", math.random(50, 60), "rust_rock", 31)
     ply:Give("rust_hands")
-    --AddItemsToGmod(ply, "Rock", math.random(50, 60), "rust_rock", 32)
+    ply:SetHealth(math.random(45, 65))
+    ply.Food = math.random(60, 80)
+    ply.Water = math.random(60, 80)
+    net.Start("gRust_Survival")
+    net.WriteFloat(ply.Food)
+    net.WriteFloat(ply.Water)
+    net.Send(ply)
+    ply:SetupHands()
 end)
 
 util.AddNetworkString("gRustSelectWep")

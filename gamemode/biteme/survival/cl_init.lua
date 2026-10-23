@@ -1,7 +1,8 @@
-local Food,Water = 0,0
-
+local Food, Water = 0, 0
 net.Receive("gRust_Survival", function()
-    
+    local food, water = net.ReadFloat(), net.ReadFloat()
+    Food = food
+    Water = water
 end)
 
 hook.Add("HUDPaint", "gRust.SurvivalHUD", function()
@@ -18,15 +19,15 @@ hook.Add("HUDPaint", "gRust.SurvivalHUD", function()
         },
         {
             "FOOD", --
-            ply:GetNWInt("gRustHunger", 100),
-            100,
+            Food,
+            175,
             Color(190, 145, 55),
             Mat = Material("materials/icons/food.png", "noclamp smooth")
         },
         {
             "WATER", --
-            ply:GetNWInt("gRustThirst", 100),
-            100,
+            Water,
+            150,
             Color(55, 135, 205),
             Mat = Material("materials/icons/cup.png", "noclamp smooth")
         }
@@ -42,3 +43,10 @@ hook.Add("HUDPaint", "gRust.SurvivalHUD", function()
         draw.SimpleText(b[1] .. "  " .. math.max(0, math.floor(b[2])), "DermaDefaultBold", x + 22, yy + 8, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
     end
 end)
+
+function GM:PostDrawViewModel(vm, ply, weapon)
+    if weapon.UseHands or not weapon:IsScripted() then
+        local hands = LocalPlayer():GetHands()
+        if IsValid(hands) then hands:DrawModel() end
+    end
+end
