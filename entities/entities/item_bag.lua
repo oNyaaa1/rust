@@ -8,7 +8,7 @@ ENT.AdminOnly = false
 ENT.Models = "models/environment/misc/loot_bag.mdl"
 if SERVER then
 	function ENT:Initialize()
-		self:SetModel(self:GetModel() or self.Models)
+		self:SetModel(self.GetModel ~= nil and self:GetModel() or self.Models)
 		self:PhysicsInit(SOLID_VPHYSICS)
 		self:SetMoveType(MOVETYPE_VPHYSICS)
 		self:SetSolid(SOLID_VPHYSICS)
@@ -44,8 +44,15 @@ if SERVER then
 
 	function ENT:Use(btn, ply)
 		local item = RustOfficial.GetItem(self.Item)
-		AddItemsToGmodeS(ply, item.name, math.random(50, 60), item.weapon, self.Sizez)
-		self:Remove()
+		--AddItemsToGmodeS(ply, item.name, math.random(50, 60), item.weapon, self.Sizez)
+		local added, left = AddItemsToGmodeS(ply, item.name, math.random(50, 60), item.weapon, self.Sizez)
+		if not added then
+			ply:ChatPrint("Inventory full")
+		elseif left > 0 then
+			self:SetSizeItem(left)
+		else
+			self:Remove()
+		end
 	end
 
 	function ENT:StartTouch(entity)

@@ -1,211 +1,337 @@
-util.AddNetworkString("grust_MoveItem") -- client -> server: move request
-util.AddNetworkString("grust_RequestInv") -- client -> server: "send me my inventory"
-util.AddNetworkString("grust_SyncInv") -- server -> client: full inventory
-local SLOTS = 36
-local function GetInv(ply)
-    return ply.GInv
+util.AddNetworkString("grust_MoveItem") -- client -> server
+util.AddNetworkString("grust_RequestInv") -- client -> server
+util.AddNetworkString("grust_SyncInv") -- server -> client
+util.AddNetworkString("gRustSelectWep")
+local INV, HOT = "Inventory", "HotBar"
+local SIZE = {
+    [INV] = 30,
+    [HOT] = 6
+}
+
+local CONT_ID = {
+    [0] = INV, -- network ids
+    [1] = HOT
+}
+
+local function GetSlot(ply, slot)
+    ply.GInv = ply.GInv or {}
+    ply.GInv[slot] = ply.GInv[slot] or {}
+    return ply.GInv[slot]
 end
 
-function SendInv(ply)
-    local inv = GetInv(ply)
-    if inv == nil then return end
-    net.Start("grust_SyncInv")
-    for i = 1, SLOTS do
-        local it = inv[i]
-        if it then
-            net.WriteString(it.id)
-            net.WriteUInt(math.Clamp(math.floor(it.dur), 0, 100), 7) -- 7 bits holds 0-127
-            net.WriteFloat(it.Count)
-        else
-            net.WriteString("")
+local function GetSlots(ply, item)
+    ply.GInv = ply.GInv or {}
+    local items = nil
+    for k, v in pairs(ply.GInv) do
+        for _, j in pairs(v) do
+            if j["id"] == item then
+                items = k
+                break
+            end
         end
+    end
+    return items
+end
+
+local function GetItem(ply, cont, slot)
+    local s = ply.GInv and ply.GInv[slot]
+    return s and s[cont]
+end
+
+local function SetItem(ply, cont, slot, item)
+    GetSlot(ply, slot)[cont] = item
+end
+
+local function ValidSlot(cont, slot)
+    return cont and slot >= 1 and slot <= SIZE[cont]
+end
+
+function GetEmptySlot(ply, cont)
+    for i = 1, SIZE[cont] do
+        if not GetItem(ply, cont, i) then return true, i end
+    end
+    return false, nil
+end
+
+local function WriteItem(it)
+    if it then
+        net.WriteString(it.id)
+        net.WriteUInt(math.Clamp(math.floor(it.dur or 100), 0, 100), 7)
+        net.WriteFloat(it.Count or 1)
+    else
+        net.WriteString("")
+    end
+end
+
+-- order: 30 inventory slots, then 6 hotbar slots (client reader must match)
+function SendInv(ply)
+    if not ply.GInv then return end
+    net.Start("grust_SyncInv")
+    for i = 1, SIZE[INV] do
+        WriteItem(GetItem(ply, INV, i))
+    end
+
+    for i = 1, SIZE[HOT] do
+        WriteItem(GetItem(ply, HOT, i))
     end
 
     net.Send(ply)
 end
 
-function AddItemsToGmodeS(ply, name, dur, wep, size)
-    local emptySlot, Slot = GetEmptySlot(ply)
-    local tbl = {
+local function MakeItem(name, dur, wep, count, model)
+    local def = RustOfficial.GetItem(name)
+    return {
         id = name,
         dur = dur or 100,
-        weapon = wep ~= nil and wep or nil,
-        Count = size,
+        weapon = wep,
+        Count = count or 1,
+        wModel = def.wModel,
     }
+end
 
-    RustOfficial.GetItem(name).func(ply)
-    ply.GInv[Slot] = tbl
+-- generic add into a specific container/slot
+function AddItemsToGmod(ply, cont, slot, name, dur, wep, count)
+    if not ValidSlot(cont, slot) then return false end
+    local def = RustOfficial.GetItem(name)
+    if not def then return false end
+    SetItem(ply, cont, slot, MakeItem(name, dur, wep, count))
+    if wep ~= nil and def.func then def.func(ply) end
     SendInv(ply)
+    return true
 end
 
-function GetEmptySlot(ply)
-    local inv = GetInv(ply)
-    for i = 1, SLOTS do
-        if not inv[i] then return true, i end
+-- remove `amount` from a specific container/slot (nil amount = remove the whole stack)
+-- returns removed(bool), amountRemoved
+function GInv_RemoveItem(ply, cont, slot, amount)
+    if not IsValid(ply) or not ply.GInv then return false, 0 end
+    if not ValidSlot(cont, slot) then return false, 0 end
+    local it = GetItem(ply, cont, slot)
+    if not it then return false, 0 end
+    local have = it.Count or 1
+    local take = math.min(amount or have, have)
+    if take >= have then
+        SetItem(ply, cont, slot, nil)
+    else
+        it.Count = have - take
     end
-    return false, 1
+
+    SendInv(ply)
+    return true, take
 end
 
+local SEARCH = {HOT, INV}
+-- finds the first slot that actually contains the item
+-- returns cont, slot (or nil if the player doesn't have it)
+function FindExistingItem(ply, item)
+    for _, cont in ipairs(SEARCH) do
+        for i = 1, SIZE[cont] do
+            local it = GetItem(ply, cont, i)
+            if it and it.id == item then return cont, i end
+        end
+    end
+    return nil
+end
+
+function GInv_RemoveAmount(ply, item, amount)
+    local left = amount
+    while left > 0 do
+        local cont, slot = FindExistingItem(ply, item)
+        if not cont then break end
+        local ok, taken = GInv_RemoveItem(ply, cont, slot, left)
+        if not ok then break end
+        left = left - taken
+    end
+    return left <= 0, left -- success, amount still missing
+end
+
+-- returns cont, slot, existing  (or nil if there is no room anywhere)
 function FindItems(ply, item)
-    local maxin = 1
-    for k, v in pairs(ply.GInv) do
-        if v.id == item then
-            maxin = k
-            break
+    local def = RustOfficial.GetItem(item)
+    if not def then return nil end
+    for _, cont in ipairs(SEARCH) do
+        for _, v in pairs(ply.SelectedITEMS) do
+            if v[1] == cont then return cont, v[2], false end
         end
     end
-    return true, maxin
+    return nil
 end
 
+-- returns cont, slot, existing (or nil if there is no room anywhere)
 function FindItem(ply, item)
-    local max = RustOfficial.GetItem(item).Max
-    local maxin = 1
-    for k, v in pairs(ply.GInv) do
-        if v.id == item and v.Count < max then
-            maxin = k
-            break
-        elseif v.id == item and v.Count >= max then
-            local emptySlot, Slot = GetEmptySlot(ply)
-            maxin = Slot
+    local def = RustOfficial.GetItem(item)
+    if not def then return nil end
+    local max = def.Max or 1
+    -- 1) partial stack of the same item
+    for _, cont in ipairs(SEARCH) do
+        for i = 1, SIZE[cont] do
+            local it = GetItem(ply, cont, i)
+            if it and it.id == item and (it.Count or 1) < max then return cont, i, true end
         end
     end
-    return maxin
+
+    -- 2) first empty slot
+    for _, cont in ipairs(SEARCH) do
+        local ok, slot = GetEmptySlot(ply, cont)
+        if ok then return cont, slot, false end
+    end
+    return nil -- full
+end
+
+-- add into stacks / first empty slots
+-- returns added(bool), leftover(number)
+function AddItemsToGmodeS(ply, name, dur, wep, size)
+    local def = RustOfficial.GetItem(name)
+    if not def then return false, size or 1 end
+    local want = size or 1
+    local max = def.Max or 1
+    local left = want
+    while left > 0 do
+        local cont, slot, existing = FindItem(ply, name)
+        if not cont then -- everything full
+            break
+        end
+
+        if existing then
+            local it = GetItem(ply, cont, slot)
+            local add = math.min(max - (it.Count or 1), left)
+            it.Count = (it.Count or 1) + add
+            left = left - add
+        else
+            local add = math.min(max, left)
+            if not AddItemsToGmod(ply, cont, slot, name, dur, wep, add) then break end
+            left = left - add
+        end
+    end
+
+    SendInv(ply)
+    return left < want, left
 end
 
 function AddItemsToGmodCount(ply, name, dur, wep, amount)
-    local max = RustOfficial.GetItem(name).Max
-    local woodSlot = FindItem(ply, "Wood")
-    local count = ply.GInv[woodSlot] ~= nil and ply.GInv[woodSlot].Count or 0
-    count = count + amount
-    local tbl = {
-        id = name,
-        dur = dur or 100,
-        weapon = wep ~= nil and wep or nil,
-        Count = math.Clamp(math.Round(count), 0, max),
-    }
-
-    ply.GInv[woodSlot] = tbl
+    local def = RustOfficial.GetItem(name)
+    if not def then return false end
+    local cont, slot, existing = FindItem(ply, name)
+    if not cont then return false end
+    local cur = existing and GetItem(ply, cont, slot).Count or 0
+    SetItem(ply, cont, slot, MakeItem(name, dur, wep, math.Clamp(math.Round(cur + amount), 0, def.Max)))
     SendInv(ply)
+    return true
 end
 
-function AddItemsToGmod(ply, name, dur, wep, slot)
-    local tbl = {
-        id = name,
-        dur = dur or 100,
-        weapon = wep ~= nil and wep or nil,
-        Count = 1,
-    }
-
-    if wep ~= nil then RustOfficial.GetItem(name).func(ply) end
-    ply.GInv[slot] = tbl
+function GRUST_AddItem(ply, itemID, wep, dur, cont)
+    if not RustOfficial.GetItem(itemID) then return false end
+    cont = cont or INV
+    local ok, slot = GetEmptySlot(ply, cont)
+    if not ok then return false end
+    SetItem(ply, cont, slot, MakeItem(itemID, dur, wep, 1))
     SendInv(ply)
+    return true, slot
 end
 
--- use this when an item is used, hit, etc.
-function GRUST_DamageItem(ply, slot, amount)
-    local it = GetInv(ply)[slot]
+function GRUST_DamageItem(ply, cont, slot, amount)
+    local it = GetItem(ply, cont, slot)
     if not it then return end
     it.dur = math.max(it.dur - amount, 0)
     SendInv(ply)
 end
 
-function GRUST_AddItem(ply, itemID, wep, dur)
-    if not RustOfficial.GetItem(itemID) then return false end
-    local inv = GetInv(ply)
-    for i = 1, SLOTS do
-        if not inv[i] then
-            inv[i] = {
-                id = itemID,
-                dur = dur or 100,
-                weapon = wep,
-                Count = 1,
-            }
-
-            SendInv(ply)
-            return true, i
-        end
-    end
-    return false
-end
-
 concommand.Add("grust_giveitem", function(ply, _, args)
-    if IsValid(ply) and not ply:IsSuperAdmin() then return end
-    if not IsValid(ply) then -- needs a player to receive it
-        return
-    end
-
-    local ok = GRUST_AddItem(ply, args[1] or "red")
-    if not ok then ply:ChatPrint("Inventory full") end
+    if not IsValid(ply) or not ply:IsSuperAdmin() then return end
+    if not GRUST_AddItem(ply, args[1] or "red") then ply:ChatPrint("Inventory full") end
 end)
 
 net.Receive("grust_RequestInv", function(_, ply) SendInv(ply) end)
-local function DroppableBag(ply, name, count)
-    local emptySlot, Slot = GetEmptySlot(ply)
+-- drop
+local function DropItem(ply, cont, slot)
+    local it = GetItem(ply, cont, slot)
+    if not it then return end
     local ent = ents.Create("item_bag")
-    ent:SetItemName(name)
-    ent:SetSizeItem(count)
+    print(it.wModel)
+    ent:SetModel(it.wModel)
+    ent:SetItemName(it.id)
+    ent:SetSizeItem(it.Count)
     ent:Spawn()
     ent:Activate()
-    ent:SetPos(ply:GetEyeTrace().HitPos + ply:GetEyeTrace().HitNormal * 32)
-    local wep = RustOfficial.GetItem(name)
-    ply.GInv[Slot] = nil
-    if wep and wep.weapon then
-        local hasRemaining = false
-        for _, v in pairs(ply.GInv) do
-            if v.id == name then
-                hasRemaining = true
-                break
+    ent:SetPos(ply:GetShootPos() + ply:GetAimVector() * 50)
+    SetItem(ply, cont, slot, nil)
+    local def = RustOfficial.GetItem(it.id)
+    if def and def.weapon then
+        local remaining = false
+        for _, c in ipairs({INV, HOT}) do
+            for i = 1, SIZE[c] do
+                local o = GetItem(ply, c, i)
+                if o and o.id == it.id then
+                    remaining = true
+                    break
+                end
             end
         end
 
-        if not hasRemaining and ply:HasWeapon(wep.weapon) then ply:StripWeapon(wep.weapon) end
+        if not remaining and ply:HasWeapon(def.weapon) then ply:StripWeapon(def.weapon) end
     end
 
     SendInv(ply)
-end
-
-local function DropItem(ply, from)
-    for k, v in pairs(ply.GInv) do
-        if k == from then
-            ply.GInv[k] = nil
-            DroppableBag(ply, v.id, v.Count)
-        end
-    end
-
-    SendInv(ply)
-end
-
-function GRUST_GetItemFromID(ply, pos)
-    local weppos = ply.GInv[pos]
-    RustOfficial.GetItem(weppos.id).func(ply)
 end
 
 function GRUST_GetItemFromWep(ply, wepID)
-    local weppos = ply.GInv
-    local null = 0
-    for k, v in pairs(weppos) do
-        if wepID == v.id then null = v.Count end
+    local total = 0
+    for _, c in ipairs({INV, HOT}) do
+        for i = 1, SIZE[c] do
+            local it = GetItem(ply, c, i)
+            if it and it.id == wepID then total = total + it.Count end
+        end
     end
-    return null
+    return total
 end
 
+local lastMove = {}
 net.Receive("grust_MoveItem", function(_, ply)
-    local from, to = net.ReadUInt(8), net.ReadUInt(8)
-    local inv = GetInv(ply)
-    if to == 0 then
-        DropItem(ply, from)
-        return
-    end
-
-    if from < 1 or from > SLOTS or to < 1 or to > SLOTS or from == to then return end
-    if not inv[from] then -- nothing there, resync them
+    if (lastMove[ply] or 0) > CurTime() then return end
+    lastMove[ply] = CurTime() + 0.05
+    if not ply.GInv then return end
+    local fromCont = CONT_ID[net.ReadUInt(1)]
+    local from = net.ReadUInt(8)
+    local toCont = CONT_ID[net.ReadUInt(1)]
+    local to = net.ReadUInt(8)
+    ply.SelectedITEMS[1] = {HOT, to}
+    if not ValidSlot(fromCont, from) then return end
+    if not GetItem(ply, fromCont, from) then
         SendInv(ply)
         return
     end
 
-    GRUST_GetItemFromID(ply, from)
-    inv[from], inv[to] = inv[to], inv[from] -- swap (works for empty targets too)
+    if to == 0 then
+        DropItem(ply, fromCont, from)
+        return
+    end
+
+    if not ValidSlot(toCont, to) or (fromCont == toCont and from == to) then return end
+    local a, b = GetItem(ply, fromCont, from), GetItem(ply, toCont, to)
+    SetItem(ply, fromCont, from, b)
+    SetItem(ply, toCont, to, a)
+    -- equip when something lands in the hotbar
     SendInv(ply)
+end)
+
+net.Receive("gRustSelectWep", function(_, ply)
+    local num = net.ReadUInt(3)
+    if num < 1 or num > SIZE[HOT] then return end
+    local item = GetItem(ply, HOT, num)
+    ply.SelectedITEMS[1] = {HOT, num}
+    if not item then
+        ply:SelectWeapon("rust_hands")
+        return
+    end
+
+    local def = RustOfficial.GetItem(item.id)
+    if not def then return end
+    if not def.weapon then
+        if def.func then def.func(ply) end
+        return
+    end
+
+    if not ply:HasWeapon(def.weapon) and def.func then def.func(ply) end
+    if ply:HasWeapon(def.weapon) then ply:SelectWeapon(def.weapon) end
 end)
 
 function GM:PlayerSetHandsModel(pl, ent)
@@ -215,38 +341,19 @@ end
 local ModelsP = {"models/player/Group01/male_04.mdl", "models/player/Group01/female_01.mdl", "models/player/Group01/female_05.mdl", "models/player/Group01/female_04.mdl", "models/player/Group01/female_03.mdl", "models/player/Group01/male_03.mdl", "models/player/Group01/male_07.mdl", "models/player/Group01/male_06.mdl", "models/player/Group01/male_01.mdl", "models/player/Group01/male_02.mdl"}
 hook.Add("PlayerSpawn", "sendinv", function(ply)
     ply:SetModel(ModelsP[math.random(#ModelsP)])
-    ply.GInv = nil
     ply.GInv = {}
-    AddItemsToGmod(ply, "Rock", math.random(50, 60), "rust_rock", 31)
-    AddItemsToGmod(ply, "GarageDoor", math.random(50, 60), nil, 32)
+    ply.SelectedITEMS = {}
+    AddItemsToGmod(ply, HOT, 1, "Rock", math.random(50, 60), "rust_rock", 1)
+    AddItemsToGmod(ply, INV, 1, "GarageDoor", math.random(50, 60), nil, 1)
     ply:Give("rust_hands")
     ply:SetHealth(math.random(45, 65))
     ply.Food = math.random(60, 80)
     ply.Water = math.random(60, 80)
-    net.Start("gRust_Survival")
+    net.Start("gRust_Survival") -- make sure this is registered elsewhere
     net.WriteFloat(ply.Food)
     net.WriteFloat(ply.Water)
     net.Send(ply)
     ply:SetupHands()
 end)
 
-util.AddNetworkString("gRustSelectWep")
-net.Receive("gRustSelectWep", function(_, ply)
-    local num = net.ReadFloat()
-    if num < 1 or num > 6 or num % 1 ~= 0 then return end
-    local slotID = 30 + num
-    local item = ply.GInv and ply.GInv[slotID]
-    if not item then
-        ply:SelectWeapon("rust_hands")
-        return
-    end
-
-    local def = RustOfficial.GetItem(item.id)
-    if not def or not def.weapon then
-        def.func(ply)
-        return
-    end
-
-    if not ply:HasWeapon(def.weapon) then def.func(ply) end
-    if ply:HasWeapon(def.weapon) then ply:SelectWeapon(def.weapon) end
-end)
+hook.Add("PlayerDisconnected", "grust_cleanup", function(ply) lastMove[ply] = nil end)

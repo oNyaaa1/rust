@@ -7,6 +7,7 @@ RustOfficial.ITEMS = {
         func = function(ply) ply:Give("rust_rock") end,
         weapon = "rust_rock",
         Max = 1,
+        wModel = "models/weapons/darky_m/rust/w_rock.mdl",
     },
     Wood = {
         name = "Wood",
@@ -15,6 +16,7 @@ RustOfficial.ITEMS = {
         func = function(ply) end,
         weapon = nil,
         Max = 1000,
+        wModel = "models/environment/misc/loot_bag.mdl"
     },
     GarageDoor = {
         name = "Garage Door",
@@ -30,9 +32,14 @@ RustOfficial.ITEMS = {
         end,
         weapon = nil,
         Max = 1000,
+        wModel = "models/environment/misc/loot_bag.mdl"
     },
 }
 
-function RustOfficial.GetItem(id)
-    return RustOfficial.ITEMS[id]
+function RustOfficial.GetItem(key)
+    local items = RustOfficial.ITEMS -- adjust to your table name
+    if items[key] then return items[key] end
+    for id, def in pairs(items) do
+        if def.name == key then return def, id end
+    end
 end

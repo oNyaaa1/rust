@@ -42,8 +42,12 @@ function SWEP:PrimaryAttack()
 end
 
 local function DroppableBag(ply, name, count, model)
-    local emptySlot, Slot = FindItems(ply, name)
-    ply.GInv[Slot] = nil
+    local conte, Slot, bool = FindItem(ply, name)
+    local cont, slot = FindExistingItem(ply, name)
+    if cont then
+        GInv_RemoveItem(ply, cont, slot, 1) -- remove 1; leave out the 1 to remove the whole stack
+    end
+
     local ent = ents.Create("item_bag")
     ent:SetItemName(name)
     ent:SetSizeItem(count)
