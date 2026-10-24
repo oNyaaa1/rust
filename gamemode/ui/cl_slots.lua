@@ -1,8 +1,8 @@
-local CONT_INV, CONT_HOT = 0, 1
-local INV_SLOTS, HOT_SLOTS = 30, 6
-
+local CONT_INV, CONT_HOT, CONT_CLOTH = 0, 1, 2
+local INV_SLOTS, HOT_SLOTS, CONT_SLOTS = 30, 6, 6
+local CONT_BITS = 2 -- 0..2 needs 2 bits. Server must ReadUInt(2) for container IDs.
 -- ===== Sync =====
--- Server order: 30 inventory slots, then 6 hotbar slots.
+-- Server order: 30 inventory slots, 6 hotbar slots, 6 clothing slots.
 local function ReadContainer(n)
     local t = {}
     for i = 1, n do
@@ -19,22 +19,30 @@ local function ReadContainer(n)
 end
 
 net.Receive("grust_SyncInv", function()
+    local inv = ReadContainer(INV_SLOTS)
+    local hot = ReadContainer(HOT_SLOTS)
+    local cloth = {}
+    if (net.BytesLeft() or 0) > 0 then cloth = ReadContainer(CONT_SLOTS) end
     local data = {
-        [CONT_INV] = ReadContainer(INV_SLOTS),
-        [CONT_HOT] = ReadContainer(HOT_SLOTS),
+        [CONT_INV] = inv,
+        [CONT_HOT] = hot,
+        [CONT_CLOTH] = cloth,
     }
 
-    GRUST_LASTINV = data -- so panels created later can fill immediately
+    GRUST_LASTINV = data
     if IsValid(GRUST_SLOTS) then GRUST_SLOTS:SetInventory(data) end
     if IsValid(GRUST_HOTBAR) then GRUST_HOTBAR:SetInventory(data) end
+    if IsValid(GRUST_HB2) then GRUST_HB2:SetInventory(data) end
+    -- keep the hotbar above the inventory background while the inventory is open
+    if IsValid(GRUST_TEST) and IsValid(GRUST_HOTBAR) then GRUST_HOTBAR:MoveToFront() end
 end)
 
--- ===== Slot grid =====
+-- ===== Slot grid (base class: builds nothing by itself) =====
 local PANEL = {}
 function PANEL:Init()
     self.Slots = {}
     self.SlotSize, self.Padding = 84, 4
-    self:BuildSlots(6, 4, CONT_INV) -- cols, rows, container (6x5 = 30 slots)
+    self.ShowKeys = false
 end
 
 function PANEL:BuildSlots(cols, rows, container)
@@ -45,12 +53,12 @@ function PANEL:BuildSlots(cols, rows, container)
         local slot = vgui.Create("DPanel", self)
         slot:SetSize(s, s)
         slot:SetPos(p + ((i - 1) % cols) * (s + p), p + math.floor((i - 1) / cols) * (s + p))
-        slot.SlotID = i -- index inside its container
+        slot.SlotID = i
         slot.Container = container
         slot.Paint = function(_, w, h)
             surface.SetDrawColor(55, 55, 55, 110)
             surface.DrawRect(0, 0, w, h)
-            if self.ShowKeys then draw.SimpleText(i, "DermaDefault", 5, 3, color_white) end
+            if self.ShowKeys then draw.SimpleText(tostring(i), "DermaDefault", 5, 3, color_white) end
         end
 
         slot:Receiver("grust_item", function(target, panels, dropped)
@@ -71,9 +79,9 @@ function PANEL:MoveItem(item, target)
     if not from or not to or not fromCont or not toCont then return end
     if fromCont == toCont and from == to then return end
     net.Start("grust_MoveItem")
-    net.WriteUInt(fromCont, 1)
+    net.WriteUInt(fromCont, CONT_BITS)
     net.WriteUInt(from, 8)
-    net.WriteUInt(toCont, 1)
+    net.WriteUInt(toCont, CONT_BITS)
     net.WriteUInt(to, 8)
     net.SendToServer()
 end
@@ -98,7 +106,7 @@ function PANEL:AddItem(slotID, itemID, dur, count)
             surface.SetMaterial(mat)
             surface.DrawTexturedRect(cx, pad, cw, h - pad * 2 - 15)
         else
-            surface.SetDrawColor(def.color)
+            surface.SetDrawColor(def.color or color_white)
             surface.DrawRect(cx, pad, cw, h - pad * 2)
         end
 
@@ -121,7 +129,7 @@ function PANEL:AddItem(slotID, itemID, dur, count)
     return item
 end
 
--- data = {[0] = inventory table, [1] = hotbar table}
+-- data = {[0] = inventory, [1] = hotbar, [2] = clothing}
 function PANEL:SetInventory(data)
     for _, slot in pairs(self.Slots) do
         if IsValid(slot.Item) then slot.Item:Remove() end
@@ -136,23 +144,27 @@ function PANEL:SetInventory(data)
 end
 
 vgui.Register("grust_SlotsGrid", PANEL, "Panel")
+-- ===== Main inventory (6x5 = 30) =====
+local INVENTORY = {}
+function INVENTORY:Init()
+    self:BuildSlots(6, 5, CONT_INV)
+end
 
+vgui.Register("grust_Inventory", INVENTORY, "grust_SlotsGrid")
 -- ===== Hotbar =====
 local HOTBAR = {}
 function HOTBAR:Init()
-    self.Slots = {}
-    self.SlotSize, self.Padding = 84, 4
     self.ShowKeys = true
-    self:BuildSlots(6, 1, CONT_HOT) -- 6 slots, hotbar container
+    self:BuildSlots(6, 1, CONT_HOT)
 end
 
 vgui.Register("grust_Hotbar", HOTBAR, "grust_SlotsGrid")
-
 local function EnsureHotbar()
     if IsValid(GRUST_HOTBAR) then return GRUST_HOTBAR end
     local hb = vgui.Create("grust_Hotbar")
     hb:SetPos((ScrW() - hb:GetWide()) / 2, ScrH() - hb:GetTall() - 20)
     hb:SetMouseInputEnabled(false)
+    hb:SetPopupStayAtFront(true) -- always stay above the inventory background
     GRUST_HOTBAR = hb
     if GRUST_LASTINV then hb:SetInventory(GRUST_LASTINV) end
     net.Start("grust_RequestInv")
@@ -161,47 +173,79 @@ local function EnsureHotbar()
 end
 
 hook.Add("InitPostEntity", "grust_HotbarInit", EnsureHotbar)
+-- ===== Clothing bar =====
+local CHARBAR = {}
+function CHARBAR:Init()
+    self.SlotSize = 70
+    self:BuildSlots(6, 1, CONT_CLOTH)
+end
 
+vgui.Register("grust_Charbar", CHARBAR, "grust_SlotsGrid")
 -- ===== Inventory open/close =====
+local function SlotAtCursor(grid)
+    if not IsValid(grid) then return end
+    local mx, my = gui.MousePos()
+    for _, slot in ipairs(grid.Slots) do
+        if IsValid(slot) then
+            local x, y = slot:LocalToScreen(0, 0)
+            if mx >= x and mx < x + slot:GetWide() and my >= y and my < y + slot:GetTall() then return slot end
+        end
+    end
+end
+
 hook.Add("ScoreboardShow", "Scoreboard_Open", function()
     if IsValid(GRUST_TEST) then GRUST_TEST:Remove() end
-    local hidebg = vgui.Create("DPanel")
-    hidebg.Paint = function() end
-    hidebg:SetSize(ScrW(), ScrH())
-    hidebg:Droppable("grust_item")
-    -- dropping on the background = drop item into the world
-    hidebg:Receiver("grust_item", function(_, panels, dropped)
+    -- fullscreen background: dropping on it = drop item into the world
+    local bg = vgui.Create("DPanel")
+    bg:SetSize(ScrW(), ScrH())
+    bg.Paint = function() end
+    bg:Receiver("grust_item", function(_, panels, dropped)
         if not dropped then return end
-        local fromSlot = IsValid(panels[1]) and panels[1]:GetParent()
+        timer.Simple(0, function() if IsValid(GRUST_HOTBAR) then GRUST_HOTBAR:MoveToFront() end end)
+        local item = panels[1]
+        local fromSlot = IsValid(item) and item:GetParent()
         if not IsValid(fromSlot) or not fromSlot.SlotID then return end
+        -- dropped over the hotbar or clothing bar? move there instead of dropping
+        local target = SlotAtCursor(GRUST_HOTBAR) or SlotAtCursor(GRUST_HB2)
+        if target then
+            GRUST_SLOTS:MoveItem(item, target) -- MoveItem doesn't depend on which grid calls it
+            return
+        end
+
         net.Start("grust_MoveItem")
-        net.WriteUInt(fromSlot.Container, 1)
+        net.WriteUInt(fromSlot.Container, CONT_BITS)
         net.WriteUInt(fromSlot.SlotID, 8)
-        net.WriteUInt(0, 1)
+        net.WriteUInt(0, CONT_BITS)
         net.WriteUInt(0, 8) -- to == 0 means drop
         net.SendToServer()
     end)
 
-    -- the inventory area swallows drops so they don't count as "drop in world"
-    local hidebgb = vgui.Create("DPanel", hidebg)
-    hidebgb:Droppable("grust_item")
-    hidebgb:Receiver("grust_item", function() end)
-    hidebgb.Paint = function() end
-    local frame = vgui.Create("DPanel", hidebgb)
-    GRUST_TEST = hidebg -- remove the root so nothing is left behind
-    local slots = vgui.Create("grust_SlotsGrid", frame)
-    GRUST_SLOTS = slots
+    bg:MakePopup()
+    bg:SetKeyboardInputEnabled(false)
+    GRUST_TEST = bg -- removing the root removes everything
+    -- main inventory (swallows drops so gaps don't count as "drop in world")
+    local invBox = vgui.Create("DPanel", bg)
+    invBox.Paint = function() end
+    invBox:Receiver("grust_item", function() end)
+    local slots = vgui.Create("grust_Inventory", invBox)
     slots:SetPos(5, 5)
-    frame:SetSize(slots:GetWide() + 10, slots:GetTall() + 10)
-    hidebgb:SetSize(slots:GetWide() + 10, slots:GetTall() + 10)
-    frame.Paint = function() end
-    frame:MakePopup()
-    frame:SetPos(hidebg:GetWide() * 0.33, hidebg:GetTall() * 0.35)
-    hidebgb:SetPos(hidebg:GetWide() * 0.33, hidebg:GetTall() * 0.35)
-    frame:SetKeyboardInputEnabled(false)
+    GRUST_SLOTS = slots
+    invBox:SetSize(slots:GetWide() + 10, slots:GetTall() + 10)
+    invBox:SetPos(bg:GetWide() * 0.33, bg:GetTall() * 0.35)
     if GRUST_LASTINV then slots:SetInventory(GRUST_LASTINV) end
+    -- clothing panel, to the left of the inventory
+    local charBox = vgui.Create("DPanel", bg)
+    charBox:Receiver("grust_item", function() end)
+    charBox.Paint = function(_, w, h) draw.RoundedBox(0, 0, 0, w, h, Color(52, 52, 52, 100)) end
+    local hb2 = vgui.Create("grust_Charbar", charBox)
+    hb2:SetPos(0, 5)
+    GRUST_HB2 = hb2
+    charBox:SetSize(hb2:GetWide(), hb2:GetTall() + 10)
+    charBox:SetPos(math.max(10, invBox:GetX() - charBox:GetWide() - 20), invBox:GetY())
+    if GRUST_LASTINV then hb2:SetInventory(GRUST_LASTINV) end
+    -- hotbar on top, interactive while the inventory is open
     local hb = EnsureHotbar()
-    hb:MakePopup()
+    hb:SetParent(bg)
     hb:SetMouseInputEnabled(true)
     hb:SetKeyboardInputEnabled(false)
     hb:MoveToFront()
@@ -211,8 +255,12 @@ hook.Add("ScoreboardShow", "Scoreboard_Open", function()
 end)
 
 hook.Add("ScoreboardHide", "Scoreboard_Close", function()
+    if IsValid(GRUST_HOTBAR) then
+        GRUST_HOTBAR:SetParent(nil)
+        GRUST_HOTBAR:SetMouseInputEnabled(false)
+    end
+
     if IsValid(GRUST_TEST) then GRUST_TEST:Remove() end
-    if IsValid(GRUST_HOTBAR) then GRUST_HOTBAR:SetMouseInputEnabled(false) end
 end)
 
 -- ===== Hotbar keys =====

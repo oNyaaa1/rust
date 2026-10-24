@@ -1,17 +1,26 @@
-util.AddNetworkString("grust_MoveItem") -- client -> server
+util.AddNetworkString("grust_MoveItem")   -- client -> server
 util.AddNetworkString("grust_RequestInv") -- client -> server
-util.AddNetworkString("grust_SyncInv") -- server -> client
+util.AddNetworkString("grust_SyncInv")    -- server -> client
 util.AddNetworkString("gRustSelectWep")
-local INV, HOT = "Inventory", "HotBar"
+
+local INV, HOT, CLOTH = "Inventory", "HotBar", "Clothing"
 local SIZE = {
     [INV] = 30,
-    [HOT] = 6
+    [HOT] = 6,
+    [CLOTH] = 6
 }
 
+-- network id -> container name (must match the client's CONT_INV/CONT_HOT/CONT_CLOTH)
 local CONT_ID = {
-    [0] = INV, -- network ids
-    [1] = HOT
+    [0] = INV,
+    [1] = HOT,
+    [2] = CLOTH
 }
+
+local function GetMaxStack(id)
+    local def = RustOfficial.GetItem(id)
+    return def and def.Max or 1
+end
 
 local function GetSlot(ply, slot)
     ply.GInv = ply.GInv or {}
@@ -43,7 +52,20 @@ local function SetItem(ply, cont, slot, item)
 end
 
 local function ValidSlot(cont, slot)
-    return cont and slot >= 1 and slot <= SIZE[cont]
+    local max = cont and SIZE[cont]
+    return max ~= nil and slot >= 1 and slot <= max
+end
+
+-- can this item be placed in this container?
+-- clothing is permissive until your item defs have a clothing flag, then enable the line below
+local function CanPlace(cont, it)
+    if not it then return true end -- moving "nothing" is always fine
+    if cont == CLOTH then
+        local def = RustOfficial.GetItem(it.id)
+        if not def then return false end
+        -- return def.clothing == true
+    end
+    return true
 end
 
 function GetEmptySlot(ply, cont)
@@ -63,7 +85,7 @@ local function WriteItem(it)
     end
 end
 
--- order: 30 inventory slots, then 6 hotbar slots (client reader must match)
+-- order: 30 inventory slots, 6 hotbar slots, 6 clothing slots (client reader must match)
 function SendInv(ply)
     if not ply.GInv then return end
     net.Start("grust_SyncInv")
@@ -73,6 +95,10 @@ function SendInv(ply)
 
     for i = 1, SIZE[HOT] do
         WriteItem(GetItem(ply, HOT, i))
+    end
+
+    for i = 1, SIZE[CLOTH] do
+        WriteItem(GetItem(ply, CLOTH, i))
     end
 
     net.Send(ply)
@@ -119,7 +145,9 @@ function GInv_RemoveItem(ply, cont, slot, amount)
     return true, take
 end
 
+-- auto-search never includes CLOTH, so resources/weapons are never auto-placed there
 local SEARCH = {HOT, INV}
+
 -- finds the first slot that actually contains the item
 -- returns cont, slot (or nil if the player doesn't have it)
 function FindExistingItem(ply, item)
@@ -258,12 +286,12 @@ concommand.Add("grust_giveitem", function(ply, _, args)
 end)
 
 net.Receive("grust_RequestInv", function(_, ply) SendInv(ply) end)
+
 -- drop
 local function DropItem(ply, cont, slot)
     local it = GetItem(ply, cont, slot)
     if not it then return end
     local ent = ents.Create("item_bag")
-    print(it.wModel)
     ent:SetModel(it.wModel)
     ent:SetItemName(it.id)
     ent:SetSizeItem(it.Count)
@@ -294,13 +322,9 @@ function GRUST_FindStackableSlot(ply, wepID)
     for _, c in ipairs({INV, HOT}) do
         for i = 1, SIZE[c] do
             local it = GetItem(ply, c, i)
-            if it and it.id == wepID and it.Count < (it.MaxStack or GetMaxStack(it.id)) then return c, i, it end
+            if it and it.id == wepID and it.Count < GetMaxStack(it.id) then return c, i, it end
         end
     end
-end
-
-local function GetMaxStack(id)
-    return RustOfficial.GetItem(id).Max
 end
 
 function GRUST_GetItemFromWep(ply, wepID)
@@ -319,27 +343,44 @@ net.Receive("grust_MoveItem", function(_, ply)
     if (lastMove[ply] or 0) > CurTime() then return end
     lastMove[ply] = CurTime() + 0.05
     if not ply.GInv then return end
-    local fromCont = CONT_ID[net.ReadUInt(1)]
-    local from = net.ReadUInt(8)
-    local toCont = CONT_ID[net.ReadUInt(1)]
-    local to = net.ReadUInt(8)
-    ply.SelectedITEMS[1] = {HOT, to}
-    if not ValidSlot(fromCont, from) then return end
+
+    -- ids come in as numbers, convert them to container names
+    local fromCont = CONT_ID[net.ReadUInt(2)]
+    local from     = net.ReadUInt(8)
+    local toCont   = CONT_ID[net.ReadUInt(2)]
+    local to       = net.ReadUInt(8)
+
+    if not fromCont or not ValidSlot(fromCont, from) then return end
     if not GetItem(ply, fromCont, from) then
         SendInv(ply)
         return
     end
 
+    -- to == 0 means drop into the world
     if to == 0 then
         DropItem(ply, fromCont, from)
         return
     end
 
-    if not ValidSlot(toCont, to) or (fromCont == toCont and from == to) then return end
+    if not toCont or not ValidSlot(toCont, to) then return end
+    if fromCont == toCont and from == to then return end
+
     local a, b = GetItem(ply, fromCont, from), GetItem(ply, toCont, to)
+
+    -- both directions of the swap must be allowed (e.g. clothing rules)
+    if not CanPlace(toCont, a) or not CanPlace(fromCont, b) then
+        SendInv(ply) -- snap the client UI back
+        return
+    end
+
     SetItem(ply, fromCont, from, b)
     SetItem(ply, toCont, to, a)
-    -- equip when something lands in the hotbar
+
+    -- only treat the destination as the selected slot when it is the hotbar
+    if toCont == HOT then
+        ply.SelectedITEMS[1] = {HOT, to}
+    end
+
     SendInv(ply)
 end)
 
