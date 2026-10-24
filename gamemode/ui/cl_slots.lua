@@ -164,7 +164,6 @@ local function EnsureHotbar()
     local hb = vgui.Create("grust_Hotbar")
     hb:SetPos((ScrW() - hb:GetWide()) / 2, ScrH() - hb:GetTall() - 20)
     hb:SetMouseInputEnabled(false)
-    hb:SetPopupStayAtFront(true) -- always stay above the inventory background
     GRUST_HOTBAR = hb
     if GRUST_LASTINV then hb:SetInventory(GRUST_LASTINV) end
     net.Start("grust_RequestInv")
