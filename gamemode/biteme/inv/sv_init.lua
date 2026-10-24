@@ -156,21 +156,34 @@ function FindItems(ply, item)
     return nil
 end
 
+local ORDER_HOT_FIRST = {HOT, INV} -- weapons/tools: hotbar first
+local ORDER_INV_FIRST = {INV, HOT} -- resources like Wood: inventory first
+
+local function GetAddOrder(def)
+    -- anything that isn't a weapon goes to the inventory first
+    if def.weapon then return ORDER_HOT_FIRST end
+    return ORDER_INV_FIRST
+end
+
 -- returns cont, slot, existing (or nil if there is no room anywhere)
 function FindItem(ply, item)
     local def = RustOfficial.GetItem(item)
     if not def then return nil end
     local max = def.Max or 1
+    local order = GetAddOrder(def)
+
     -- 1) partial stack of the same item
-    for _, cont in ipairs(SEARCH) do
+    for _, cont in ipairs(order) do
         for i = 1, SIZE[cont] do
             local it = GetItem(ply, cont, i)
-            if it and it.id == item and (it.Count or 1) < max then return cont, i, true end
+            if it and it.id == item and (it.Count or 1) < max then
+                return cont, i, true
+            end
         end
     end
 
-    -- 2) first empty slot
-    for _, cont in ipairs(SEARCH) do
+    -- 2) first empty slot (in preferred order)
+    for _, cont in ipairs(order) do
         local ok, slot = GetEmptySlot(ply, cont)
         if ok then return cont, slot, false end
     end
