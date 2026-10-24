@@ -42,7 +42,6 @@ function SWEP:PrimaryAttack()
 end
 
 local function DroppableBag(ply, name, count, model)
-    local conte, Slot, bool = FindItem(ply, name)
     local cont, slot = FindExistingItem(ply, name)
     if cont then
         GInv_RemoveItem(ply, cont, slot, 1) -- remove 1; leave out the 1 to remove the whole stack
