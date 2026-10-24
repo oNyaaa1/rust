@@ -70,7 +70,7 @@ local function DroppableBag(ply, name, count, model)
     SendInv(ply)
     return ent
 end
-//
+
 function SWEP:Think()
     if CLIENT then return end
     local pl = self:GetOwner()
