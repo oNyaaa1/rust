@@ -6,7 +6,7 @@ SWEP.DrawAmmo = false
 function SWEP:Initialize()
     self:SetHoldType("none")
 end
-
+//
 function SWEP:PrimaryAttack()
 end
 
