@@ -156,8 +156,15 @@ function FindItems(ply, item)
     return nil
 end
 
-local ORDER_HOT_FIRST = {HOT, INV} -- weapons/tools: hotbar first
-local ORDER_INV_FIRST = {INV, HOT} -- resources like Wood: inventory first
+local ORDER_HOT_FIRST = {
+    HOT, -- weapons/tools: hotbar first
+    INV
+}
+
+local ORDER_INV_FIRST = {
+    INV, -- resources like Wood: inventory first
+    HOT
+}
 
 local function GetAddOrder(def)
     -- anything that isn't a weapon goes to the inventory first
@@ -171,14 +178,11 @@ function FindItem(ply, item)
     if not def then return nil end
     local max = def.Max or 1
     local order = GetAddOrder(def)
-
     -- 1) partial stack of the same item
     for _, cont in ipairs(order) do
         for i = 1, SIZE[cont] do
             local it = GetItem(ply, cont, i)
-            if it and it.id == item and (it.Count or 1) < max then
-                return cont, i, true
-            end
+            if it and it.id == item and (it.Count or 1) < max then return cont, i, true end
         end
     end
 
@@ -286,12 +290,25 @@ local function DropItem(ply, cont, slot)
     SendInv(ply)
 end
 
+function GRUST_FindStackableSlot(ply, wepID)
+    for _, c in ipairs({INV, HOT}) do
+        for i = 1, SIZE[c] do
+            local it = GetItem(ply, c, i)
+            if it and it.id == wepID and it.Count < (it.MaxStack or GetMaxStack(it.id)) then return c, i, it end
+        end
+    end
+end
+
+local function GetMaxStack(id)
+    return RustOfficial.GetItem(id).Max
+end
+
 function GRUST_GetItemFromWep(ply, wepID)
     local total = 0
     for _, c in ipairs({INV, HOT}) do
         for i = 1, SIZE[c] do
             local it = GetItem(ply, c, i)
-            if it and it.id == wepID then total = total + it.Count end
+            if it and it.id == wepID and it.Count < GetMaxStack(it.id) then total = total + it.Count end
         end
     end
     return total
