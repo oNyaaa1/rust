@@ -241,7 +241,7 @@ hook.Add("ScoreboardShow", "Scoreboard_Open", function()
     hb2:SetPos(0, 5)
     GRUST_HB2 = hb2
     charBox:SetSize(hb2:GetWide(), hb2:GetTall() + 10)
-    charBox:SetPos(math.max(10, invBox:GetX() - charBox:GetWide() - 20), invBox:GetY())
+    charBox:SetPos(math.max(10, invBox:GetX() - charBox:GetWide() - 20), invBox:GetY() + 350)
     if GRUST_LASTINV then hb2:SetInventory(GRUST_LASTINV) end
     -- hotbar on top, interactive while the inventory is open
     local hb = EnsureHotbar()
