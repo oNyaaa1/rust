@@ -34,6 +34,15 @@ RustOfficial.ITEMS = {
         Max = 1000,
         wModel = "models/environment/misc/loot_bag.mdl"
     },
+    Builder = {
+        name = "Building Plan",
+        color = Color(200, 60, 60),
+        image = "materials/items/misc/blueprint.png",
+        func = function(ply) ply:Give("rust_builder") end,
+        weapon = "rust_builder",
+        Max = 1000,
+        wModel = "models/environment/misc/loot_bag.mdl"
+    },
 }
 
 function RustOfficial.GetItem(key)

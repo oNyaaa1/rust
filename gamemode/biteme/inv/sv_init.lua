@@ -416,6 +416,8 @@ hook.Add("PlayerSpawn", "sendinv", function(ply)
     ply.SelectedITEMS = {}
     AddItemsToGmod(ply, HOT, 1, "Rock", math.random(50, 60), "rust_rock", 1)
     AddItemsToGmod(ply, INV, 1, "GarageDoor", math.random(50, 60), nil, 1)
+    AddItemsToGmod(ply, INV, 2, "Builder", math.random(50, 60), nil, 1)
+    
     ply:Give("rust_hands")
     ply:SetHealth(math.random(45, 65))
     ply.Food = math.random(60, 80)
