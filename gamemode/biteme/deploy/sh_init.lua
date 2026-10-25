@@ -10,6 +10,18 @@ DEPLOY.FItem = function(ply, item)
     return ent
 end
 
+DEPLOY.AllowedOn = {
+    sent_foundation = nil, -- nil = anything (current behaviour)
+    sent_ceiling = {
+        sent_stairs = true,
+        sent_wall = true,
+        sent_door = true,
+        sent_doorway = true,
+        sent_ceiling = true,
+        sent_foundation = false,
+    },
+}
+
 function DEPLOY:SetSocket(ply, class, pos, ang)
     if CLIENT then return end
     if not IsValid(ply) or not pos or not ang then return end
@@ -19,12 +31,37 @@ function DEPLOY:SetSocket(ply, class, pos, ang)
         if pos:Distance(v[1]) <= 50 and class == "sent_foundation" then return end
     end
 
+    -- everything except a foundation must be placed while standing on a foundation or ceiling
+    if class ~= "sent_foundation" then
+        local base = self:GetGround(ply)
+        if not IsValid(base) then return end
+        -- also enforce the AllowedOn rules server-side
+        local allowed = self.AllowedOn[base:GetClass()]
+        if allowed and not allowed[class] then return end
+    end
+
+    -- doors only go where a doorway already exists (closest one wins)
+    local doorway
+    if class == "sent_door" then
+        local nearestDist = math.huge
+        for _, e in ipairs(ents.FindByClass("sent_doorway")) do
+            local d = pos:Distance(e:GetPos())
+            if d < nearestDist then doorway, nearestDist = e, d end
+        end
+
+        if not IsValid(doorway) or nearestDist > 80 then return end
+        if IsValid(doorway.Door) then -- already has a door
+            return
+        end
+    end
+
     local ent = ents.Create(class)
     if not IsValid(ent) then return end
     ent:SetPos(pos)
     ent:SetAngles(ang)
     ent:Spawn()
     ent:Activate()
+    if IsValid(doorway) then doorway.Door = ent end
     ply.Sockets[#ply.Sockets + 1] = {pos, class}
     return ent
 end
@@ -101,18 +138,6 @@ DEPLOY.ClassZ.sent_ceiling = 14.04 + 128
 -- keep the foundation's yaw instead of facing an edge
 DEPLOY.ClassFaceEdge.sent_ceiling = false
 DEPLOY.ClassRot.sent_ceiling = 0
-DEPLOY.AllowedOn = {
-    sent_foundation = nil, -- nil = anything (current behaviour)
-    sent_ceiling = {
-        sent_stairs = true,
-        sent_wall = true,
-        sent_door = true,
-        sent_doorway = true,
-        sent_ceiling = true,
-        sent_foundation = false,
-    },
-}
-
 DEPLOY.BaseClasses = {
     sent_foundation = true,
     sent_ceiling = true,
