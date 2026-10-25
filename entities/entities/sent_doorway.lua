@@ -13,9 +13,9 @@ end
 
 if SERVER then
 	function ENT:Initialize()
-		self.Entity:SetModel(self.Models)
-		self:PhysicsInit(SOLID_VPHYSICS)
-		self:SetMoveType(MOVETYPE_VPHYSICS)
+		self:SetModel(self.Models)
+		self:PhysicsInitStatic(SOLID_VPHYSICS)
+		self:SetMoveType(MOVETYPE_NONE)
 		self:SetSolid(SOLID_VPHYSICS)
 		local phys = self:GetPhysicsObject()
 		if phys:IsValid() then
@@ -24,7 +24,6 @@ if SERVER then
 		end
 
 		self:SetHealthz(100)
-		constraint.Weld(self, Entity(0), 0, 0, 0, true, true)
 		self.Ent_Health = 25
 		self.Ent_HealthMax = 25
 		--self:SetMaterial("Model/effects/vol_light001")
@@ -70,6 +69,15 @@ end
 if CLIENT then
 	ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 	function ENT:Initialize()
+		local SPACING = 137.78 -- must match DEPLOY.ClassDist.sent_foundation
+		local mins, maxs = self:OBBMins(), self:OBBMaxs()
+		local width = math.max(maxs.x - mins.x, maxs.y - mins.y)
+		if width > 0 and width < SPACING then
+			-- stretch only the footprint, leave thickness alone
+			local m = Matrix()
+			m:Scale(Vector(SPACING / width, SPACING / width, 1))
+			self:EnableMatrix("RenderMultiply", m) -- client-side visual only
+		end
 	end
 
 	function ENT:Draw(flags)

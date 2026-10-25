@@ -17,7 +17,6 @@ function ENT:Initialize()
     end
 
     self.SetHealthz = 300
-    constraint.Weld(self, game.GetWorld(), 0, 0, 0, true, true)
     self.SpawnTime = CurTime()
 end
 

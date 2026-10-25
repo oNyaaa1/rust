@@ -23,7 +23,7 @@ if SERVER then
 			phys:EnableMotion(false)
 		end
 
-		constraint.Weld(self, Entity(0), 0, 0, 0, true, true)
+
 		self.CD = 0
 	end
 

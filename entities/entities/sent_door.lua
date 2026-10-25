@@ -5,7 +5,7 @@ ENT.PrintName = "Door"
 ENT.Category = ""
 ENT.Spawnable = true
 ENT.AdminOnly = false
-ENT.Models = "models/vasey/wood_house/door.mdl"
+ENT.Models = "deployable/wooden_door.mdl"
 function ENT:SetupDataTables()
 	self:NetworkVar("Float", 0, "Healthz")
 	self:NetworkVar("Float", 1, "MaxHealthz")
@@ -13,7 +13,7 @@ end
 
 if SERVER then
 	function ENT:Initialize()
-		self.Entity:SetModel("models/vasey/wood_house/door.mdl")
+		self.Entity:SetModel("deployable/wooden_door.mdl")
 		self:PhysicsInit(SOLID_VPHYSICS)
 		self:SetMoveType(MOVETYPE_VPHYSICS)
 		self:SetSolid(SOLID_VPHYSICS)
@@ -24,7 +24,6 @@ if SERVER then
 		end
 
 		self:SetHealthz(100)
-		constraint.Weld(self, Entity(0), 0, 0, 0, true, true)
 		self.Ent_Health = 2500
 		self.Ent_HealthMax = 100
 		--self:SetMaterial("Model/effects/vol_light001")

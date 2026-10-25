@@ -14,8 +14,8 @@ end
 if SERVER then
 	function ENT:Initialize()
 		self.Entity:SetModel(self.Models)
-		self:PhysicsInit(SOLID_VPHYSICS)
-		self:SetMoveType(MOVETYPE_VPHYSICS)
+		self:PhysicsInitStatic(SOLID_VPHYSICS)
+		self:SetMoveType(MOVETYPE_NONE)
 		self:SetSolid(SOLID_VPHYSICS)
 		local phys = self:GetPhysicsObject()
 		if phys:IsValid() then
@@ -24,7 +24,7 @@ if SERVER then
 		end
 
 		self:SetHealthz(100)
-		constraint.Weld(self, Entity(0), 0, 0, 0, true, true)
+
 		self.Ent_Health = 25
 		self.Ent_HealthMax = 25
 		--self:SetMaterial("Model/effects/vol_light001")

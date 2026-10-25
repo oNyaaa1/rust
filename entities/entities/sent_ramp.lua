@@ -26,7 +26,7 @@ function ENT:Initialize()
 		phys:Wake()
 		phys:EnableMotion(false)
 	end 
-	constraint.Weld( self, Entity(0), 0, 0, 0, true, true )
+
 
 	self.Ent_Health = 7000	
 	self.Ent_HealthMax = 7000

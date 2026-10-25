@@ -14,6 +14,7 @@ SWEP.Secondary.ClipSize = -1
 SWEP.Secondary.DefaultClip = -1
 SWEP.Secondary.Automatic = false
 SWEP.Secondary.Ammo = "none"
+if SERVER then util.AddNetworkString("RemoveGhostGRUST") end
 function SWEP:SetupDataTables()
     self:NetworkVar("Int", 0, "Selected")
 end
@@ -26,7 +27,7 @@ function SWEP:Initialize()
 end
 
 function SWEP:GetSelectedClass()
-    return self.Items[self:GetSelected()]
+    return self.Items[self:GetSelected()] or "sent_foundation"
 end
 
 function SWEP:PrimaryAttack()
@@ -51,99 +52,84 @@ end
 function SWEP:Reload()
 end
 
-if CLIENT then
-    function SWEP:RemoveGhost()
-        GRUST_GHOST:ReleaseGhostEntity()
+function SWEP:RemoveGhost()
+    if SERVER then return end
+    if IsValid(self.Ghost) then
+        self.Ghost:Remove()
+        self.Ghost = nil
     end
+end
 
-    local function GetModelFor(class)
-        local ent = scripted_ents.Get(class or "")
-        if not ent then return end
-        local m = ent.Model or ent.Models -- use whichever field your entities define
-        if istable(m) then m = m[1] end
-        return isstring(m) and m or nil
-    end
+local function GetModelFor(class)
+    local ent = scripted_ents.Get(class or "")
+    if not ent then return end
+    local m = ent.Model or ent.Models -- use whichever field your entities define
+    if istable(m) then m = m[1] end
+    return isstring(m) and m or nil
+end
 
-    local function KillGhost(wep)
-        if IsValid(wep) then
-            if IsValid(wep.Ghost) then wep.Ghost:Remove() end
-            wep.Ghost, wep.GhostModel = nil, nil
-        end
-    end
-
-    function SWEP:RemoveGhost()
-        KillGhost(self)
-    end
-
-    function SWEP:Think()
-        local ply = self:GetOwner()
-        if not IsValid(ply) or ply ~= LocalPlayer() then return end
-        local class = self:GetSelectedClass()
-        local model = GetModelFor(class)
-        local pos, ang = DEPLOY:GetSocket(ply, class)
-        if not model or not pos then
-            self:RemoveGhost()
-            return
-        end
-
-        -- create once, or rebuild only when the selected piece changes
-        if not IsValid(self.Ghost) or self.GhostModel ~= model then
-            self:RemoveGhost()
-            util.PrecacheModel(model)
-            self.Ghost = ClientsideModel(model, RENDERGROUP_TRANSLUCENT)
-            self.GhostModel = model
-            self.Ghost:SetRenderMode(RENDERMODE_TRANSALPHA)
-            self.Ghost:SetColor(Color(255, 255, 255, 120))
-        end
-
-        self.Ghost:SetPos(pos)
-        self.Ghost:SetAngles(ang)
-    end
-
-    function SWEP:Holster()
+function SWEP:Think()
+    if SERVER then return end
+    local ply = self:GetOwner()
+    if not IsValid(ply) or ply ~= LocalPlayer() then return end
+    local class = self:GetSelectedClass()
+    local model = GetModelFor(class)
+    local pos, ang = DEPLOY:GetSocket(ply, class)
+    if not model or not pos then
         self:RemoveGhost()
-        return true
+        return
     end
 
-    function SWEP:OnRemove()
+    -- create once, or rebuild only when the selected piece changes
+    if not IsValid(self.Ghost) or self.GhostModel ~= model then
         self:RemoveGhost()
+        util.PrecacheModel(model)
+        self.Ghost = ClientsideModel(model, RENDERGROUP_TRANSLUCENT)
+        self.GhostModel = model
+        self.Ghost:SetRenderMode(RENDERMODE_TRANSALPHA)
+        self.Ghost:SetColor(Color(255, 255, 255, 120))
     end
 
-    function SWEP:DrawHUD()
-        local ply = self:GetOwner()
-        if not IsValid(ply) then return end
-        local _, _, txt = DEPLOY:GetSocket(ply, self:GetSelectedClass())
-        draw.SimpleTextOutlined(txt or "none", "DermaDefault", 0, 0, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, color_black)
+    self.Ghost:SetPos(pos)
+    self.Ghost:SetAngles(ang)
+end
+
+function SWEP:OnRemove()
+    self:RemoveGhost()
+end
+
+function SWEP:DrawHUD()
+end
+
+function SWEP:Deploy()
+    return true
+end
+
+function SWEP:Holster()
+    return true
+end
+
+local function RemoveGhost(wer)
+    if IsValid(wer) and IsValid(wer.Ghost) then
+        wer.Ghost:Remove()
+        wer.Ghost = nil
     end
+end
 
-    function SWEP:Holster()
-        self:RemoveGhost()
-        return true
-    end
+hook.Add("Think", "RemoveGhost", function()
+    if SERVER then return end
+    local ply = LocalPlayer()
+    if not IsValid(ply) then return end
+    local wep = ply:GetActiveWeapon()
+    if not IsValid(wep) then return end
+    if not lastwe and wep:GetClass() == "rust_builder" then lastwe = wep end
+    RemoveGhost(lastwe)
+end)
 
-    function SWEP:OnRemove()
-        self:RemoveGhost()
-    end
+function SWEP:OnRemove()
+    self:RemoveGhost()
+end
 
-    function SWEP:OnDrop()
-        self:RemoveGhost()
-    end
-
-    -- the ghost lives in a global so cleanup doesn't depend on the weapon being active
-    -- the weapon the ghost belongs to, so we can clean it up from outside
-    local lastWep
-    hook.Add("Think", "DeployGhost_Cleanup", function()
-        local ply = LocalPlayer()
-        if not IsValid(ply) then return end
-        local wep = ply:GetActiveWeapon()
-        local holding = IsValid(wep) and wep:GetClass() == "rust_deploy" -- match your weapon's class (lowercase)
-        if holding then
-            lastWep = wep
-        elseif IsValid(lastWep) then
-            KillGhost(lastWep) -- switched to the rock / anything else
-            lastWep = nil
-        end
-
-        if not ply:Alive() and IsValid(lastWep) then KillGhost(lastWep) end
-    end)
+function SWEP:OnDrop()
+    self:RemoveGhost()
 end

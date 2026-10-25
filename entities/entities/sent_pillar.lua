@@ -18,7 +18,7 @@ if SERVER then
 			phys:EnableMotion(false)
 		end
 
-		constraint.Weld(self, Entity(0), 0, 0, 0, true, true)
+
 		self.Ent_Health = 12000
 		self.Ent_HealthMax = 12000
 		--self:SetMaterial("Model/effects/vol_light001")

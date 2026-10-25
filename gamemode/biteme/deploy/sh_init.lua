@@ -16,7 +16,7 @@ function DEPLOY:SetSocket(ply, class, pos, ang)
     ply.Sockets = ply.Sockets or {}
     -- reject if too close to an existing socket
     for _, v in ipairs(ply.Sockets) do
-        if pos:Distance(v[1]) <= 50 then return end
+        if pos:Distance(v[1]) <= 50 and class == "sent_foundation" then return end
     end
 
     local ent = ents.Create(class)
@@ -35,6 +35,8 @@ DEPLOY.ClassDist = {
     sent_wall = 72.9, -- half width = the edge
     sent_door = 72.9,
     sent_doorway = 72.9,
+    sent_stairs = 0,
+    sent_ceiling = 0,
 }
 
 DEPLOY.DefaultDist = 72.9
@@ -44,6 +46,8 @@ DEPLOY.ClassRot = {
     sent_wall = 90,
     sent_door = 90,
     sent_doorway = 90,
+    sent_stairs = 90,
+    sent_ceiling = 0,
 }
 
 -- false = keep the foundation's own yaw instead of facing the edge
@@ -58,6 +62,8 @@ DEPLOY.ClassZ = {
     sent_wall = 0,
     sent_door = 0,
     sent_doorway = 0,
+    sent_stairs = 0,
+    sent_ceiling = 0,
 }
 
 local EDGES = {
@@ -79,6 +85,14 @@ local EDGES = {
     },
 }
 
+DEPLOY.CeilingZ = {
+    sent_stairs = 0,
+    sent_wall = 0,
+    sent_door = 0,
+    sent_doorway = 0,
+    sent_ceiling = 128,
+}
+
 -- centred over the foundation (0 = no edge offset)
 DEPLOY.ClassDist.sent_ceiling = 0
 -- height above the foundation origin: the wall's height plus the wall's own offset
@@ -87,9 +101,26 @@ DEPLOY.ClassZ.sent_ceiling = 14.04 + 128
 -- keep the foundation's yaw instead of facing an edge
 DEPLOY.ClassFaceEdge.sent_ceiling = false
 DEPLOY.ClassRot.sent_ceiling = 0
+DEPLOY.AllowedOn = {
+    sent_foundation = nil, -- nil = anything (current behaviour)
+    sent_ceiling = {
+        sent_stairs = true,
+        sent_wall = true,
+        sent_door = true,
+        sent_doorway = true,
+        sent_ceiling = true,
+        sent_foundation = false,
+    },
+}
+
+DEPLOY.BaseClasses = {
+    sent_foundation = true,
+    sent_ceiling = true,
+}
+
 function DEPLOY:GetGround(ply)
     local ent = ply:GetGroundEntity()
-    if IsValid(ent) and ent:GetClass() == "sent_foundation" then return ent end
+    if IsValid(ent) and self.BaseClasses[ent:GetClass()] then return ent end
     -- fallback for the client: hull trace straight down
     local pos = ply:GetPos()
     local tr = util.TraceHull({
@@ -100,17 +131,21 @@ function DEPLOY:GetGround(ply)
         filter = ply,
     })
 
-    if IsValid(tr.Entity) and tr.Entity:GetClass() == "sent_foundation" then return tr.Entity end
+    if IsValid(tr.Entity) and self.BaseClasses[tr.Entity:GetClass()] then return tr.Entity end
 end
 
 function DEPLOY:GetSocket(ply, class)
     if not IsValid(ply) then return end
     local tr = ply:GetEyeTrace()
     local fallbackPos = tr.HitPos + tr.HitNormal * 32
-    local foundation = self:GetGround(ply)
-    if not IsValid(foundation) or foundation:GetClass() ~= "sent_foundation" then return fallbackPos, Angle(0, 0, 0), "none" end
+    local base = self:GetGround(ply)
+    if not IsValid(base) then return fallbackPos, Angle(0, ply:GetAngles().yaw, 0), "none" end
     class = string.lower(class or "")
-    local fYaw = foundation:GetAngles().y
+    local baseClass = base:GetClass()
+    -- restrict what can be placed on this base
+    local allowed = self.AllowedOn[baseClass]
+    if allowed and not allowed[class] then return fallbackPos, Angle(0, ply:GetAngles().yaw, 0), "none" end
+    local fYaw = base:GetAngles().y
     local yaw = math.NormalizeAngle(ply:EyeAngles().y - fYaw)
     local name
     if yaw >= -45 and yaw < 45 then
@@ -125,8 +160,13 @@ function DEPLOY:GetSocket(ply, class)
 
     local edge = EDGES[name]
     local dist = self.ClassDist[class] or self.DefaultDist
-    local worldPos = LocalToWorld(edge.dir * dist, angle_zero, foundation:GetPos(), Angle(0, fYaw, 0))
-    worldPos.z = foundation:GetPos().z + (self.ClassZ[class] or self.DefaultZ)
+    local worldPos = LocalToWorld(edge.dir * dist, angle_zero, base:GetPos(), Angle(0, fYaw, 0))
+    if baseClass == "sent_ceiling" then
+        worldPos.z = base:GetPos().z + (self.CeilingZ[class] or self.CeilingDefaultZ)
+    else
+        worldPos.z = base:GetPos().z + (self.ClassZ[class] or self.DefaultZ)
+    end
+
     local rot = self.ClassRot[class] or 0
     local ang
     if self.ClassFaceEdge[class] == false then
