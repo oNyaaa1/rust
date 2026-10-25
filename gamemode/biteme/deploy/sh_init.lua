@@ -134,6 +134,10 @@ function DEPLOY:GetGround(ply)
     if IsValid(tr.Entity) and self.BaseClasses[tr.Entity:GetClass()] then return tr.Entity end
 end
 
+DEPLOY.ClassSide = {
+    sent_door = -25, -- start at 0, then nudge until it sits in the middle of the frame
+}
+
 function DEPLOY:GetSocket(ply, class)
     if not IsValid(ply) then return end
     local tr = ply:GetEyeTrace()
@@ -160,9 +164,11 @@ function DEPLOY:GetSocket(ply, class)
 
     local edge = EDGES[name]
     local dist = self.ClassDist[class] or self.DefaultDist
-    local worldPos = LocalToWorld(edge.dir * dist, angle_zero, base:GetPos(), Angle(0, fYaw, 0))
+    local side = self.ClassSide[class] or 0
+    local perp = Vector(-edge.dir.y, edge.dir.x, 0) -- 90 degrees to the edge direction
+    local worldPos = LocalToWorld(edge.dir * dist + perp * side, angle_zero, base:GetPos(), Angle(0, fYaw, 0))
     if baseClass == "sent_ceiling" then
-        worldPos.z = base:GetPos().z + (self.CeilingZ[class] or self.CeilingDefaultZ)
+        worldPos.z = base:GetPos().z + (self.CeilingZ[class] or self.DefaultZ)
     else
         worldPos.z = base:GetPos().z + (self.ClassZ[class] or self.DefaultZ)
     end

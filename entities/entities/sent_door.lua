@@ -5,7 +5,7 @@ ENT.PrintName = "Door"
 ENT.Category = ""
 ENT.Spawnable = true
 ENT.AdminOnly = false
-ENT.Models = "deployable/wooden_door.mdl"
+ENT.Models = "models/deployable/wooden_door.mdl"
 function ENT:SetupDataTables()
 	self:NetworkVar("Float", 0, "Healthz")
 	self:NetworkVar("Float", 1, "MaxHealthz")
@@ -13,7 +13,7 @@ end
 
 if SERVER then
 	function ENT:Initialize()
-		self.Entity:SetModel("deployable/wooden_door.mdl")
+		self.Entity:SetModel("models/deployable/wooden_door.mdl")
 		self:PhysicsInit(SOLID_VPHYSICS)
 		self:SetMoveType(MOVETYPE_VPHYSICS)
 		self:SetSolid(SOLID_VPHYSICS)
@@ -61,19 +61,14 @@ end ]]
 		if ply.Meh == nil then ply.Meh = 0 end
 		if ply.Meh >= CurTime() then return end
 		ply.Meh = CurTime() + 0.2
-		if self.PropOwned ~= ply then
-			ply:ChatPrint("Door is locked")
-			return
-		end
-
 		if self.DoorOpen == false then
 			self.DoorPos = self:GetAngles()
 			self.DoorPosa = self:GetPos()
-			self:SetPos(self:GetPos() + ply:GetForward() + Vector(28, 25, 7))
+			//self:SetPos(self:GetPos() + ply:GetForward() + Vector(28, 25, 7))
 			self:SetAngles(self:GetAngles() + Angle(0, 90, 0))
 			self.DoorOpen = true
 		elseif self.DoorOpen == true then
-			self:SetPos(self.DoorPosa)
+			//self:SetPos(self.DoorPosa)
 			self:SetAngles(self.DoorPos)
 			self.DoorOpen = false
 		end
@@ -95,6 +90,20 @@ end
 if CLIENT then
 	ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 	function ENT:Initialize()
+		if not CLIENT then return end
+		local DOOR_H = 110 -- target height, tune until the top touches the lintel
+		local mins, maxs = self:OBBMins(), self:OBBMaxs()
+		local sz = maxs.z - mins.z
+		if sz <= 0 then return end
+		local kz = DOOR_H / sz
+		-- bottom stays fixed, extra height grows upward
+		local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
+		local m = Matrix()
+		m:Translate(pivot)
+		m:Scale(Vector(1.3, 1, kz)) -- this is the line that was missing
+		m:Translate(-pivot)
+		self:EnableMatrix("RenderMultiply", m)
+		self:SetRenderBounds(Vector(mins.x, mins.y, mins.z), Vector(maxs.x, maxs.y, mins.z + sz * kz))
 	end
 
 	-- Draw some 3D text
