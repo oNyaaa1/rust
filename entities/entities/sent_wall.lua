@@ -23,6 +23,12 @@ if SERVER then
 			phys:EnableMotion(false)
 		end
 
+		local FOUNDATION_WIDTH = 145.78 -- from your foundation's OBB
+		local mins, maxs = self:OBBMins(), self:OBBMaxs()
+		local length = math.max(maxs.x - mins.x, maxs.y - mins.y)
+		if length > 0 then self:SetModelScale(FOUNDATION_WIDTH / length, 0) end
+		self:PhysicsInit(SOLID_VPHYSICS) -- rebuild collision at the new size
+		self:SetMoveType(MOVETYPE_NONE)
 		self:SetHealthz(100)
 		constraint.Weld(self, Entity(0), 0, 0, 0, true, true)
 		self.Ent_Health = 25
