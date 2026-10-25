@@ -70,6 +70,15 @@ end
 if CLIENT then
 	ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 	function ENT:Initialize()
+		local SPACING = 137.78 -- must match DEPLOY.ClassDist.sent_foundation
+		local mins, maxs = self:OBBMins(), self:OBBMaxs()
+		local width = math.max(maxs.x - mins.x, maxs.y - mins.y)
+		if width > 0 and width < SPACING then
+			-- stretch only the footprint, leave thickness alone
+			local m = Matrix()
+			m:Scale(Vector(SPACING / width, SPACING / width, 1))
+			self:EnableMatrix("RenderMultiply", m) -- client-side visual only
+		end
 	end
 
 	function ENT:Draw(flags)

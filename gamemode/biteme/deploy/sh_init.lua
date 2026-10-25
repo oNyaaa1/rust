@@ -31,7 +31,7 @@ end
 
 -- distance from the foundation origin to where each piece's origin sits
 DEPLOY.ClassDist = {
-    sent_foundation = 137.78, -- full spacing (neighbouring foundation)
+    sent_foundation = 132.78, -- full spacing (neighbouring foundation)
     sent_wall = 72.9, -- half width = the edge
     sent_door = 72.9,
     sent_doorway = 72.9,
