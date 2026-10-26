@@ -1,8 +1,7 @@
-util.AddNetworkString("grust_MoveItem")   -- client -> server
+util.AddNetworkString("grust_MoveItem") -- client -> server
 util.AddNetworkString("grust_RequestInv") -- client -> server
-util.AddNetworkString("grust_SyncInv")    -- server -> client
+util.AddNetworkString("grust_SyncInv") -- server -> client
 util.AddNetworkString("gRustSelectWep")
-
 local INV, HOT, CLOTH = "Inventory", "HotBar", "Clothing"
 local SIZE = {
     [INV] = 30,
@@ -59,7 +58,10 @@ end
 -- can this item be placed in this container?
 -- clothing is permissive until your item defs have a clothing flag, then enable the line below
 local function CanPlace(cont, it)
-    if not it then return true end -- moving "nothing" is always fine
+    if not it then -- moving "nothing" is always fine
+        return true
+    end
+
     if cont == CLOTH then
         local def = RustOfficial.GetItem(it.id)
         if not def then return false end
@@ -147,7 +149,6 @@ end
 
 -- auto-search never includes CLOTH, so resources/weapons are never auto-placed there
 local SEARCH = {HOT, INV}
-
 -- finds the first slot that actually contains the item
 -- returns cont, slot (or nil if the player doesn't have it)
 function FindExistingItem(ply, item)
@@ -286,7 +287,6 @@ concommand.Add("grust_giveitem", function(ply, _, args)
 end)
 
 net.Receive("grust_RequestInv", function(_, ply) SendInv(ply) end)
-
 -- drop
 local function DropItem(ply, cont, slot)
     local it = GetItem(ply, cont, slot)
@@ -343,13 +343,11 @@ net.Receive("grust_MoveItem", function(_, ply)
     if (lastMove[ply] or 0) > CurTime() then return end
     lastMove[ply] = CurTime() + 0.05
     if not ply.GInv then return end
-
     -- ids come in as numbers, convert them to container names
     local fromCont = CONT_ID[net.ReadUInt(2)]
-    local from     = net.ReadUInt(8)
-    local toCont   = CONT_ID[net.ReadUInt(2)]
-    local to       = net.ReadUInt(8)
-
+    local from = net.ReadUInt(8)
+    local toCont = CONT_ID[net.ReadUInt(2)]
+    local to = net.ReadUInt(8)
     if not fromCont or not ValidSlot(fromCont, from) then return end
     if not GetItem(ply, fromCont, from) then
         SendInv(ply)
@@ -364,9 +362,7 @@ net.Receive("grust_MoveItem", function(_, ply)
 
     if not toCont or not ValidSlot(toCont, to) then return end
     if fromCont == toCont and from == to then return end
-
     local a, b = GetItem(ply, fromCont, from), GetItem(ply, toCont, to)
-
     -- both directions of the swap must be allowed (e.g. clothing rules)
     if not CanPlace(toCont, a) or not CanPlace(fromCont, b) then
         SendInv(ply) -- snap the client UI back
@@ -375,12 +371,8 @@ net.Receive("grust_MoveItem", function(_, ply)
 
     SetItem(ply, fromCont, from, b)
     SetItem(ply, toCont, to, a)
-
     -- only treat the destination as the selected slot when it is the hotbar
-    if toCont == HOT then
-        ply.SelectedITEMS[1] = {HOT, to}
-    end
-
+    if toCont == HOT then ply.SelectedITEMS[1] = {HOT, to} end
     SendInv(ply)
 end)
 
@@ -409,8 +401,10 @@ function GM:PlayerSetHandsModel(pl, ent)
     ent:SetModel("models/player/darky_m/rust/c_arms_human.mdl")
 end
 
+local SpawnsPos = {}
 local ModelsP = {"models/player/Group01/male_04.mdl", "models/player/Group01/female_01.mdl", "models/player/Group01/female_05.mdl", "models/player/Group01/female_04.mdl", "models/player/Group01/female_03.mdl", "models/player/Group01/male_03.mdl", "models/player/Group01/male_07.mdl", "models/player/Group01/male_06.mdl", "models/player/Group01/male_01.mdl", "models/player/Group01/male_02.mdl"}
 hook.Add("PlayerSpawn", "sendinv", function(ply)
+    if not IsValid(ply) and not ply:IsFullyAuthenticated() then return end
     ply:SetModel(ModelsP[math.random(#ModelsP)])
     ply.GInv = {}
     ply.SelectedITEMS = {}
@@ -419,7 +413,6 @@ hook.Add("PlayerSpawn", "sendinv", function(ply)
     AddItemsToGmod(ply, INV, 1, "GarageDoor", math.random(50, 60), nil, 2)
     AddItemsToGmod(ply, INV, 1, "GarageDoor", math.random(50, 60), nil, 3)
     AddItemsToGmod(ply, INV, 2, "Builder", math.random(50, 60), nil, 1)
-    
     ply:Give("rust_hands")
     ply:SetHealth(math.random(45, 65))
     ply.Food = math.random(60, 80)
@@ -429,6 +422,13 @@ hook.Add("PlayerSpawn", "sendinv", function(ply)
     net.WriteFloat(ply.Water)
     net.Send(ply)
     ply:SetupHands()
+    if SpawnsPos[ply:SteamID64()] then
+        ply:SetPos(SpawnsPos[ply:SteamID64()][2])
+        ply:SetEyeAngles(SpawnsPos[ply:SteamID64()][1])
+    end
 end)
 
-hook.Add("PlayerDisconnected", "grust_cleanup", function(ply) lastMove[ply] = nil end)
+hook.Add("PlayerDisconnected", "grust_cleanup", function(ply)
+    lastMove[ply] = nil
+    SpawnsPos[ply:SteamID64()] = {ply:EyeAngles(),ply:GetPos()}
+end)

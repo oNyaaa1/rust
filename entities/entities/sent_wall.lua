@@ -77,6 +77,11 @@ end
 if CLIENT then
 	ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 	function ENT:Initialize()
+	end
+
+	function ENT:Draw(flags)
+		-- Draw the model
+		self:DrawModel(flags)
 		local WALL_LENGTH = 137.78 + 14 -- match your DEPLOY.ClassDist entry for the wall class
 		local mins, maxs = self:OBBMins(), self:OBBMaxs()
 		local sx, sy = maxs.x - mins.x, maxs.y - mins.y
@@ -95,10 +100,5 @@ if CLIENT then
 			m:Translate(-pivot)
 			self:EnableMatrix("RenderMultiply", m)
 		end
-	end
-
-	function ENT:Draw(flags)
-		-- Draw the model
-		self:DrawModel(flags)
 	end
 end

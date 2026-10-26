@@ -64,11 +64,11 @@ end ]]
 		if self.DoorOpen == false then
 			self.DoorPos = self:GetAngles()
 			self.DoorPosa = self:GetPos()
-			//self:SetPos(self:GetPos() + ply:GetForward() + Vector(28, 25, 7))
+			--self:SetPos(self:GetPos() + ply:GetForward() + Vector(28, 25, 7))
 			self:SetAngles(self:GetAngles() + Angle(0, 90, 0))
 			self.DoorOpen = true
 		elseif self.DoorOpen == true then
-			//self:SetPos(self.DoorPosa)
+			--self:SetPos(self.DoorPosa)
 			self:SetAngles(self.DoorPos)
 			self.DoorOpen = false
 		end
@@ -90,7 +90,12 @@ end
 if CLIENT then
 	ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 	function ENT:Initialize()
-		if not CLIENT then return end
+	end
+
+	-- Draw some 3D text
+	function ENT:Draw(flags)
+		-- Draw the model
+		self:DrawModel(flags)
 		local DOOR_H = 110 -- target height, tune until the top touches the lintel
 		local mins, maxs = self:OBBMins(), self:OBBMaxs()
 		local sz = maxs.z - mins.z
@@ -104,11 +109,5 @@ if CLIENT then
 		m:Translate(-pivot)
 		self:EnableMatrix("RenderMultiply", m)
 		self:SetRenderBounds(Vector(mins.x, mins.y, mins.z), Vector(maxs.x, maxs.y, mins.z + sz * kz))
-	end
-
-	-- Draw some 3D text
-	function ENT:Draw(flags)
-		-- Draw the model
-		self:DrawModel(flags)
 	end
 end

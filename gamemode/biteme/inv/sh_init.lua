@@ -112,8 +112,6 @@ if CLIENT then
             if ply:KeyDown(IN_ATTACK) and ply.CoolDownCD <= CurTime() then
                 ply.SelectedGarageDoor = false
                 net.Start("GarageDoorPlaceL")
-                net.WriteVector(pos)
-                net.WriteAngle(ang)
                 net.SendToServer()
                 ply.CoolDownCD = CurTime() + 1
             end

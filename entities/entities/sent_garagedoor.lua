@@ -85,25 +85,30 @@ if SERVER then
 	end
 end
 
-if CLIENT then
-	function ENT:Initialize()
-		if not CLIENT then return end
-		local DOOR_H = 140 -- target height, tune until the top touches the lintel
-		local mins, maxs = self:OBBMins(), self:OBBMaxs()
+if SERVER then return end
+local DOOR_H = 140
+function ENT:ApplyDoorScale()
+	if not self.DoorMatrix then
+		local mins, maxs = self:GetModelBounds()
 		local sz = maxs.z - mins.z
 		if sz <= 0 then return end
 		local kz = DOOR_H / sz
-		-- bottom stays fixed, extra height grows upward
 		local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
 		local m = Matrix()
 		m:Translate(pivot)
-		m:Scale(Vector(1.3, 1, kz)) -- this is the line that was missing
+		m:Scale(Vector(1.2, 1, kz))
 		m:Translate(-pivot)
-		self:EnableMatrix("RenderMultiply", m)
-		self:SetRenderBounds(Vector(mins.x, mins.y, mins.z), Vector(maxs.x, maxs.y, mins.z + sz * kz))
+		local pad = Vector(64, 64, 64)
+		self.DoorMatrix = m
+		self.DoorBoundsMin = mins - pad
+		self.DoorBoundsMax = Vector(maxs.x, maxs.y, mins.z + sz * kz) + pad
 	end
 
-	function ENT:Draw()
-		self:DrawModel()
-	end
+	self:EnableMatrix("RenderMultiply", self.DoorMatrix)
+	self:SetRenderBounds(self.DoorBoundsMin, self.DoorBoundsMax)
+end
+
+function ENT:Draw()
+	self:ApplyDoorScale()
+	self:DrawModel()
 end

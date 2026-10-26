@@ -24,7 +24,6 @@ if SERVER then
 		end
 
 		self:SetHealthz(100)
-
 		self.Ent_Health = 25
 		self.Ent_HealthMax = 25
 		--self:SetMaterial("Model/effects/vol_light001")
@@ -70,6 +69,11 @@ end
 if CLIENT then
 	ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 	function ENT:Initialize()
+	end
+
+	function ENT:Draw(flags)
+		-- Draw the model
+		self:DrawModel(flags)
 		local SPACING = 137.78 -- must match DEPLOY.ClassDist.sent_foundation
 		local mins, maxs = self:OBBMins(), self:OBBMaxs()
 		local width = math.max(maxs.x - mins.x, maxs.y - mins.y)
@@ -79,10 +83,5 @@ if CLIENT then
 			m:Scale(Vector(SPACING / width, SPACING / width, 1))
 			self:EnableMatrix("RenderMultiply", m) -- client-side visual only
 		end
-	end
-
-	function ENT:Draw(flags)
-		-- Draw the model
-		self:DrawModel(flags)
 	end
 end

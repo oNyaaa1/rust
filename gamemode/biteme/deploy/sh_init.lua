@@ -19,6 +19,7 @@ DEPLOY.AllowedOn = {
         sent_doorway = true,
         sent_ceiling = true,
         sent_foundation = false,
+        sent_doorwayl = true,
     },
     sent_doorwayl = {
         sent_garagedoor = true,
