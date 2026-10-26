@@ -20,7 +20,7 @@ function SWEP:SetupDataTables()
 end
 
 -- same order as RadialMenu.Items, so the wheel index matches
-SWEP.Items = {"sent_foundation", "sent_wall", "sent_door", "sent_ceiling", "sent_doorway", "sent_stairs","sent_doorwayl"}
+SWEP.Items = {"sent_foundation", "sent_wall", "sent_door", "sent_ceiling", "sent_doorway", "sent_stairs", "sent_doorwayl"}
 function SWEP:Initialize()
     self:SetHoldType("pistol")
     self:SetSelected(1)
@@ -74,7 +74,7 @@ function SWEP:Think()
     if not IsValid(ply) or ply ~= LocalPlayer() then return end
     local class = self:GetSelectedClass()
     local model = GetModelFor(class)
-    local pos, ang = DEPLOY:GetSocket(ply, class)
+    local pos, ang, text = DEPLOY:GetSocket(ply, class)
     if not model or not pos then
         self:RemoveGhost()
         return
@@ -87,7 +87,11 @@ function SWEP:Think()
         self.Ghost = ClientsideModel(model, RENDERGROUP_TRANSLUCENT)
         self.GhostModel = model
         self.Ghost:SetRenderMode(RENDERMODE_TRANSALPHA)
-        self.Ghost:SetColor(Color(255, 255, 255, 120))
+        if text == "none" then
+            self.Ghost:SetColor(Color(255, 0, 0, 120))
+        else
+            self.Ghost:SetColor(Color(0, 255, 0, 120))
+        end
     end
 
     self.Ghost:SetPos(pos)

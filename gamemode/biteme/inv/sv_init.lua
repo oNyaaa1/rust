@@ -106,7 +106,7 @@ function SendInv(ply)
     net.Send(ply)
 end
 
-local function MakeItem(name, dur, wep, count, model)
+local function MakeItem(name, dur, wep, count, model, slot)
     local def = RustOfficial.GetItem(name)
     return {
         id = name,
@@ -114,6 +114,7 @@ local function MakeItem(name, dur, wep, count, model)
         weapon = wep,
         Count = count or 1,
         wModel = def.wModel,
+        slot = slot,
     }
 end
 
@@ -122,7 +123,7 @@ function AddItemsToGmod(ply, cont, slot, name, dur, wep, count)
     if not ValidSlot(cont, slot) then return false end
     local def = RustOfficial.GetItem(name)
     if not def then return false end
-    SetItem(ply, cont, slot, MakeItem(name, dur, wep, count))
+    SetItem(ply, cont, slot, MakeItem(name, dur, wep, count, slot))
     if wep ~= nil and def.func then def.func(ply) end
     SendInv(ply)
     return true
@@ -176,9 +177,10 @@ end
 -- returns cont, slot, existing  (or nil if there is no room anywhere)
 function FindItems(ply, item)
     local def = RustOfficial.GetItem(item)
+    PrintTable(def)
     if not def then return nil end
     for _, cont in ipairs(SEARCH) do
-        for _, v in pairs(ply.SelectedITEMS) do
+        for _, v in pairs(ply.GInv[def.slot]) do
             if v[1] == cont then return cont, v[2], false end
         end
     end
@@ -223,6 +225,31 @@ function FindItem(ply, item)
     return nil -- full
 end
 
+function FindItemsNew(ply, item)
+    local def = RustOfficial.GetItem(item)
+    local slots = GetSlots(ply, item)
+    if not def then return nil end
+    for _, cont in ipairs(SEARCH) do
+        local tbl = istable(GetSlot(ply, slots)[cont]) and GetSlot(ply, slots)[cont] or {}
+        for _, v in pairs(tbl) do
+            return v
+        end
+    end
+    return nil
+end
+
+function DeleteItem(ply, item)
+    local itm, num, bool = FindItem(ply, item)
+    if bool then
+        ply.GInv[num][itm] = nil
+        SendInv(ply)
+        return true
+    end
+    return false
+    --ply.GInv[slot][cont]
+end
+
+-- add into 
 -- add into stacks / first empty slots
 -- returns added(bool), leftover(number)
 function AddItemsToGmodeS(ply, name, dur, wep, size)
@@ -259,7 +286,7 @@ function AddItemsToGmodCount(ply, name, dur, wep, amount)
     local cont, slot, existing = FindItem(ply, name)
     if not cont then return false end
     local cur = existing and GetItem(ply, cont, slot).Count or 0
-    SetItem(ply, cont, slot, MakeItem(name, dur, wep, math.Clamp(math.Round(cur + amount), 0, def.Max)))
+    SetItem(ply, cont, slot, MakeItem(name, dur, wep, math.Clamp(math.Round(cur + amount), 0, def.Max), slot))
     SendInv(ply)
     return true
 end
@@ -269,7 +296,7 @@ function GRUST_AddItem(ply, itemID, wep, dur, cont)
     cont = cont or INV
     local ok, slot = GetEmptySlot(ply, cont)
     if not ok then return false end
-    SetItem(ply, cont, slot, MakeItem(itemID, dur, wep, 1))
+    SetItem(ply, cont, slot, MakeItem(itemID, dur, wep, 1, slot))
     SendInv(ply)
     return true, slot
 end
@@ -430,5 +457,5 @@ end)
 
 hook.Add("PlayerDisconnected", "grust_cleanup", function(ply)
     lastMove[ply] = nil
-    SpawnsPos[ply:SteamID64()] = {ply:EyeAngles(),ply:GetPos()}
+    SpawnsPos[ply:SteamID64()] = {ply:EyeAngles(), ply:GetPos()}
 end)

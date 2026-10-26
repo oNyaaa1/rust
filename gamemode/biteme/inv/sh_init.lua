@@ -8,8 +8,7 @@ if SERVER then
         local pos, ang, name = DEPLOY:GetSocket(ply, "sent_garagedoor")
         if name ~= "doorwayl" then return end
         DEPLOY.FItem(ply, "sent_garagedoor", pos, ang)
-        local emptySlot, Slot = FindItems(ply, "GarageDoor")
-        ply.GInv[Slot] = nil
+        local CanDelete = DeleteItem(ply, "GarageDoor")
         SendInv(ply)
     end)
 end
@@ -102,9 +101,8 @@ if CLIENT then
         local ply = LocalPlayer()
         if not RustOfficial.GhostGD then RustOfficial.GhostGD = {} end
         if ply.SelectedGarageDoor == nil then ply.SelectedGarageDoor = false end
-        --RustOfficial.ITEMS.GarageDoor.func(ply)
         if not ply.CoolDownCDL then ply.CoolDownCD = 0 end
-        if ply.SelectedGarageDoor then
+        if ply.SelectedGarageDoor and RustOfficial.GhostGD.Ghost then
             local pos, ang = DEPLOY:GetSocket(ply, "sent_garagedoor")
             if not isvector(pos) or not isangle(ang) then return end
             RustOfficial.GhostGD.Ghost:SetPos(pos)

@@ -24,25 +24,74 @@ DEPLOY.AllowedOn = {
     sent_doorwayl = {
         sent_garagedoor = true,
         sent_doorwayl = false,
+        sent_wall = false,
+        sent_door = false,
     }
 }
+
+function DEPLOY:BlockedByDoorwayL(class, pos)
+    if class ~= "sent_wall" then return false end
+    for _, e in ipairs(ents.FindByClass("sent_doorwayl")) do
+        if pos:Distance(e:GetPos()) < 60 then return true end
+    end
+    return false
+end
+
+local EDGE_CLASSES = {
+    sent_wall = true,
+    sent_doorway = true,
+    sent_doorwayl = true,
+}
+
+function DEPLOY:EdgeOccupied(class, pos)
+    if not EDGE_CLASSES[class] then return false end
+    for c in pairs(EDGE_CLASSES) do
+        for _, e in ipairs(ents.FindByClass(c)) do
+            local p = e:GetPos()
+            if math.abs(p.z - pos.z) < 64 and (p - pos):Length2D() < 40 then return true end
+        end
+    end
+    return false
+end
+
+function DEPLOY:GetGround(ply, class)
+    local ent = ply:GetGroundEntity()
+    if IsValid(ent) and ent:GetClass() == "worldspawn" and class == "sent_foundation" then return ent, ply:GetAngles(), "worldspawn" end
+    if IsValid(ent) and ent:GetClass() == "worldspawn" and class == "sent_ceiling" then return ent, ply:GetAngles(), "none" end
+    if IsValid(ent) and self.BaseClasses[ent:GetClass()] then return ent, ply:GetAngles(), "none" end
+    -- fallback for the client: hull trace straight down
+    local pos = ply:GetPos()
+    local tr = util.TraceHull({
+        start = pos + Vector(0, 0, 4),
+        endpos = pos - Vector(0, 0, 16),
+        mins = ply:OBBMins(),
+        maxs = ply:OBBMaxs(),
+        filter = ply,
+    })
+
+    if IsValid(tr.Entity) and self.BaseClasses[tr.Entity:GetClass()] then return tr.Entity, ply:GetAngles(), "worldspawn" end
+end
 
 function DEPLOY:SetSocket(ply, class, pos, ang)
     if CLIENT then return end
     if not IsValid(ply) or not pos or not ang then return end
     ply.Sockets = ply.Sockets or {}
-    -- reject if too close to an existing socket
     for _, v in ipairs(ply.Sockets) do
         if pos:Distance(v[1]) <= 50 and class == "sent_foundation" then return end
     end
 
     -- everything except a foundation must be placed while standing on a foundation or ceiling
     if class ~= "sent_foundation" then
-        local base = self:GetGround(ply)
+        local base, ground, txt = self:GetGround(ply, class)
         if not IsValid(base) then return end
         -- also enforce the AllowedOn rules server-side
         local allowed = self.AllowedOn[base:GetClass()]
         if allowed and not allowed[class] then return end
+    end
+
+    if self:EdgeOccupied(class, pos) then
+        print("edge occupied", class)
+        return
     end
 
     -- doors only go where a doorway already exists (closest one wins)
@@ -156,22 +205,6 @@ DEPLOY.BaseClasses = {
     sent_ceiling = true,
 }
 
-function DEPLOY:GetGround(ply)
-    local ent = ply:GetGroundEntity()
-    if IsValid(ent) and self.BaseClasses[ent:GetClass()] then return ent end
-    -- fallback for the client: hull trace straight down
-    local pos = ply:GetPos()
-    local tr = util.TraceHull({
-        start = pos + Vector(0, 0, 4),
-        endpos = pos - Vector(0, 0, 16),
-        mins = ply:OBBMins(),
-        maxs = ply:OBBMaxs(),
-        filter = ply,
-    })
-
-    if IsValid(tr.Entity) and self.BaseClasses[tr.Entity:GetClass()] then return tr.Entity end
-end
-
 DEPLOY.ClassSide = {
     sent_door = -25, -- start at 0, then nudge until it sits in the middle of the frame
 }
@@ -202,8 +235,8 @@ function DEPLOY:GetSocket(ply, class)
 
     local tr = ply:GetEyeTrace()
     local fallbackPos = tr.HitPos + tr.HitNormal * 32
-    local base = self:GetGround(ply)
-    if not IsValid(base) then return fallbackPos, Angle(0, ply:GetAngles().yaw, 0), "none" end
+    local base, none, txt = self:GetGround(ply, class)
+    if not IsValid(base) then return fallbackPos, Angle(0, ply:GetAngles().yaw, 0), txt end
     class = string.lower(class or "")
     local baseClass = base:GetClass()
     -- restrict what can be placed on this base
@@ -240,5 +273,7 @@ function DEPLOY:GetSocket(ply, class)
     else
         ang = Angle(0, fYaw + edge.yaw + rot, 0)
     end
+
+    if self:BlockedByDoorwayL(class, worldPos) then return fallbackPos, Angle(0, ply:GetAngles().yaw, 0), "none" end
     return worldPos, ang, name
 end
