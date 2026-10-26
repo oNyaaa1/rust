@@ -88,7 +88,7 @@ end
 if CLIENT then
 	function ENT:Initialize()
 		if not CLIENT then return end
-		local DOOR_H = 130 -- target height, tune until the top touches the lintel
+		local DOOR_H = 140 -- target height, tune until the top touches the lintel
 		local mins, maxs = self:OBBMins(), self:OBBMaxs()
 		local sz = maxs.z - mins.z
 		if sz <= 0 then return end

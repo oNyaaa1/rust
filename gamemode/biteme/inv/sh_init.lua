@@ -5,8 +5,9 @@ if SERVER then
     util.AddNetworkString("SendClientinfoGDL")
     util.AddNetworkString("GarageDoorPlaceL")
     net.Receive("GarageDoorPlaceL", function(len, ply)
-        local pos, ang = DEPLOY:GetSocket(ply, "sent_garagedoor")
-        DEPLOY.FItem(ply, "sent_garagedoor",pos,ang)
+        local pos, ang, name = DEPLOY:GetSocket(ply, "sent_garagedoor")
+        if name ~= "doorwayl" then return end
+        DEPLOY.FItem(ply, "sent_garagedoor", pos, ang)
         local emptySlot, Slot = FindItems(ply, "GarageDoor")
         ply.GInv[Slot] = nil
         SendInv(ply)
@@ -77,8 +78,7 @@ end
 if CLIENT then
     net.Receive("SendClientinfoGDL", function()
         local ply = LocalPlayer()
-        local cares = false
-        if not cares then
+        if not ply.SelectedGarageDoor then
             cares = true
             local function GetModelFor(class)
                 local ent = scripted_ents.Get(class or "")

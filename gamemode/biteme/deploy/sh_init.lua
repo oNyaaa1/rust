@@ -175,8 +175,30 @@ DEPLOY.ClassSide = {
     sent_door = -25, -- start at 0, then nudge until it sits in the middle of the frame
 }
 
+DEPLOY.GarageOffset = Vector(0, 0, 0)
+function DEPLOY:GetDoorwayL(ply)
+    local tr = ply:GetEyeTrace()
+    local best, bestDist = nil, 150
+    for _, e in ipairs(ents.FindByClass("sent_doorwayl")) do
+        local d = tr.HitPos:Distance(e:GetPos())
+        if d < bestDist then best, bestDist = e, d end
+    end
+    return best
+end
+
 function DEPLOY:GetSocket(ply, class)
     if not IsValid(ply) then return end
+    if string.lower(class or "") == "sent_garagedoor" then
+        local door = self:GetDoorwayL(ply)
+        if not IsValid(door) then
+            local t = ply:GetEyeTrace()
+            return t.HitPos + t.HitNormal * 32, Angle(0, ply:GetAngles().yaw, 0), "none"
+        end
+
+        local pos, ang = LocalToWorld(self.GarageOffset, Angle(0, 0, 0), door:GetPos(), door:GetAngles())
+        return pos, ang, "doorwayl"
+    end
+
     local tr = ply:GetEyeTrace()
     local fallbackPos = tr.HitPos + tr.HitNormal * 32
     local base = self:GetGround(ply)
