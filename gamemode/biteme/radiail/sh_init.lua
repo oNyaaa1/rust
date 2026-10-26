@@ -27,6 +27,10 @@ RadialMenu.Items = {
         name = "Stairs",
         class = "sent_stairs"
     },
+    {
+        name = "Garage Frame",
+        class = "sent_doorwayl"
+    },
 }
 
 RadialMenu.InnerRadius = 70

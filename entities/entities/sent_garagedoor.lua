@@ -7,7 +7,6 @@ ENT.Spawnable = true
 ENT.AdminOnly = false
 ENT.AutomaticFrameAdvance = true
 ENT.Model = "models/darky_m/rust/building/garage_door.mdl"
-
 function ENT:SetupDataTables()
 	self:NetworkVar("Float", 0, "Healthz")
 	self:NetworkVar("Float", 1, "MaxHealthz")
@@ -18,20 +17,12 @@ if SERVER then
 	function ENT:SetupCollision(open)
 		local mins, maxs = self.Mins, self.Maxs
 		if open then mins = Vector(mins.x, mins.y, maxs.z - 20) end
-
-		local verts = {
-			Vector(mins.x, mins.y, mins.z), Vector(mins.x, mins.y, maxs.z),
-			Vector(mins.x, maxs.y, mins.z), Vector(mins.x, maxs.y, maxs.z),
-			Vector(maxs.x, mins.y, mins.z), Vector(maxs.x, mins.y, maxs.z),
-			Vector(maxs.x, maxs.y, mins.z), Vector(maxs.x, maxs.y, maxs.z),
-		}
-
+		local verts = {Vector(mins.x, mins.y, mins.z), Vector(mins.x, mins.y, maxs.z), Vector(mins.x, maxs.y, mins.z), Vector(mins.x, maxs.y, maxs.z), Vector(maxs.x, mins.y, mins.z), Vector(maxs.x, mins.y, maxs.z), Vector(maxs.x, maxs.y, mins.z), Vector(maxs.x, maxs.y, maxs.z),}
 		self:PhysicsInitConvex(verts)
 		self:SetSolid(SOLID_VPHYSICS)
 		self:SetMoveType(MOVETYPE_VPHYSICS)
 		self:SetCollisionGroup(COLLISION_GROUP_NONE)
 		self:EnableCustomCollisions(true)
-
 		local phys = self:GetPhysicsObject()
 		if IsValid(phys) then phys:EnableMotion(false) end
 	end
@@ -48,7 +39,6 @@ if SERVER then
 	function ENT:Initialize()
 		self:SetModel(self.Model)
 		self.Mins, self.Maxs = self:GetModelBounds()
-
 		self:SetUseType(SIMPLE_USE)
 		self:SetMaxHealthz(100)
 		self:SetHealthz(100)
@@ -71,9 +61,7 @@ if SERVER then
 	function ENT:Use(activator)
 		if not IsValid(activator) or not activator:IsPlayer() then return end
 		if (self.NextUse or 0) > CurTime() then return end
-
 		local open = not self:GetGarageDoor()
-
 		-- don't close the door on someone standing in it
 		if not open and self:DoorwayBlocked() then
 			self.NextUse = CurTime() + 0.5
@@ -81,21 +69,15 @@ if SERVER then
 		end
 
 		self:SetGarageDoor(open)
-
 		local seq = self:LookupSequence(open and "open" or "close")
 		self:ResetSequence(seq)
 		self:SetCycle(0)
 		self:SetPlaybackRate(1)
 		local dur = self:SequenceDuration(seq)
 		self.NextUse = CurTime() + dur + 0.1
-
 		if open then
 			-- stay solid while it rises, then leave only the top slab
-			timer.Simple(dur, function()
-				if IsValid(self) and self:GetGarageDoor() then
-					self:SetupCollision(true)
-				end
-			end)
+			timer.Simple(dur, function() if IsValid(self) and self:GetGarageDoor() then self:SetupCollision(true) end end)
 		else
 			-- area is clear, so block immediately
 			self:SetupCollision(false)
@@ -104,6 +86,23 @@ if SERVER then
 end
 
 if CLIENT then
+	function ENT:Initialize()
+		if not CLIENT then return end
+		local DOOR_H = 130 -- target height, tune until the top touches the lintel
+		local mins, maxs = self:OBBMins(), self:OBBMaxs()
+		local sz = maxs.z - mins.z
+		if sz <= 0 then return end
+		local kz = DOOR_H / sz
+		-- bottom stays fixed, extra height grows upward
+		local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
+		local m = Matrix()
+		m:Translate(pivot)
+		m:Scale(Vector(1.3, 1, kz)) -- this is the line that was missing
+		m:Translate(-pivot)
+		self:EnableMatrix("RenderMultiply", m)
+		self:SetRenderBounds(Vector(mins.x, mins.y, mins.z), Vector(maxs.x, maxs.y, mins.z + sz * kz))
+	end
+
 	function ENT:Draw()
 		self:DrawModel()
 	end

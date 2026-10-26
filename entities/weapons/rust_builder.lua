@@ -20,7 +20,7 @@ function SWEP:SetupDataTables()
 end
 
 -- same order as RadialMenu.Items, so the wheel index matches
-SWEP.Items = {"sent_foundation", "sent_wall", "sent_door", "sent_ceiling", "sent_doorway", "sent_stairs",}
+SWEP.Items = {"sent_foundation", "sent_wall", "sent_door", "sent_ceiling", "sent_doorway", "sent_stairs","sent_doorwayl"}
 function SWEP:Initialize()
     self:SetHoldType("pistol")
     self:SetSelected(1)

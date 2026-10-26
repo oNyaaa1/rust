@@ -1,10 +1,10 @@
 DEPLOY = DEPLOY or {}
-DEPLOY.FItem = function(ply, item)
+DEPLOY.FItem = function(ply, item, pos, ang)
     if CLIENT then return end
     local ent = ents.Create(item)
     if not IsValid(ent) then return end
-    local tr = ply:GetEyeTrace()
-    ent:SetPos(tr.HitPos + tr.HitNormal * 12)
+    ent:SetPos(pos)
+    ent:SetAngles(ang)
     ent:Spawn()
     ent:Activate()
     return ent
@@ -20,6 +20,10 @@ DEPLOY.AllowedOn = {
         sent_ceiling = true,
         sent_foundation = false,
     },
+    sent_doorwayl = {
+        sent_garagedoor = true,
+        sent_doorwayl = false,
+    }
 }
 
 function DEPLOY:SetSocket(ply, class, pos, ang)
@@ -74,6 +78,8 @@ DEPLOY.ClassDist = {
     sent_doorway = 72.9,
     sent_stairs = 0,
     sent_ceiling = 0,
+    sent_garagedoor = 72.9,
+    sent_doorwayl = 72.9,
 }
 
 DEPLOY.DefaultDist = 72.9
@@ -85,6 +91,8 @@ DEPLOY.ClassRot = {
     sent_doorway = 90,
     sent_stairs = 90,
     sent_ceiling = 0,
+    sent_garagedoor = 90,
+    sent_doorwayl = 90,
 }
 
 -- false = keep the foundation's own yaw instead of facing the edge
@@ -101,6 +109,8 @@ DEPLOY.ClassZ = {
     sent_doorway = 0,
     sent_stairs = 0,
     sent_ceiling = 0,
+    sent_garagedoor = 0,
+    sent_doorwayl = 0,
 }
 
 local EDGES = {
@@ -128,6 +138,8 @@ DEPLOY.CeilingZ = {
     sent_door = 0,
     sent_doorway = 0,
     sent_ceiling = 128,
+    sent_garagedoor = 0,
+    sent_doorwayl = 0,
 }
 
 -- centred over the foundation (0 = no edge offset)

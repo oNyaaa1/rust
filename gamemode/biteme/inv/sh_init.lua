@@ -1,4 +1,18 @@
 RustOfficial = RustOfficial or {}
+RustOfficial.GhostGD = {}
+RustOfficial.GhostGD.GhostModel = ""
+if SERVER then
+    util.AddNetworkString("SendClientinfoGDL")
+    util.AddNetworkString("GarageDoorPlaceL")
+    net.Receive("GarageDoorPlaceL", function(len, ply)
+        local pos, ang = DEPLOY:GetSocket(ply, "sent_garagedoor")
+        DEPLOY.FItem(ply, "sent_garagedoor",pos,ang)
+        local emptySlot, Slot = FindItems(ply, "GarageDoor")
+        ply.GInv[Slot] = nil
+        SendInv(ply)
+    end)
+end
+
 RustOfficial.ITEMS = {
     Rock = {
         name = "Rock",
@@ -8,6 +22,8 @@ RustOfficial.ITEMS = {
         weapon = "rust_rock",
         Max = 1,
         wModel = "models/weapons/darky_m/rust/w_rock.mdl",
+        Craftable = true,
+        BluePrint = false,
     },
     Wood = {
         name = "Wood",
@@ -16,7 +32,9 @@ RustOfficial.ITEMS = {
         func = function(ply) end,
         weapon = nil,
         Max = 1000,
-        wModel = "models/environment/misc/loot_bag.mdl"
+        wModel = "models/environment/misc/loot_bag.mdl",
+        Craftable = false,
+        BluePrint = false,
     },
     GarageDoor = {
         name = "Garage Door",
@@ -24,15 +42,16 @@ RustOfficial.ITEMS = {
         image = "materials/items/deployable/garage_door.png",
         func = function(ply)
             if SERVER then
-                DEPLOY.FItem(ply, "sent_garagedoor")
-                local emptySlot, Slot = FindItems(ply, "GarageDoor")
-                ply.GInv[Slot] = nil
-                SendInv(ply)
+                net.Start("SendClientinfoGDL")
+                net.WriteBool(true)
+                net.Send(ply)
             end
         end,
         weapon = nil,
         Max = 1000,
-        wModel = "models/environment/misc/loot_bag.mdl"
+        wModel = "models/environment/misc/loot_bag.mdl",
+        Craftable = true,
+        BluePrint = true,
     },
     Builder = {
         name = "Building Plan",
@@ -41,7 +60,9 @@ RustOfficial.ITEMS = {
         func = function(ply) ply:Give("rust_builder") end,
         weapon = "rust_builder",
         Max = 1000,
-        wModel = "models/environment/misc/loot_bag.mdl"
+        wModel = "models/environment/misc/loot_bag.mdl",
+        Craftable = true,
+        BluePrint = false,
     },
 }
 
@@ -51,4 +72,56 @@ function RustOfficial.GetItem(key)
     for id, def in pairs(items) do
         if def.name == key then return def, id end
     end
+end
+
+if CLIENT then
+    net.Receive("SendClientinfoGDL", function()
+        local ply = LocalPlayer()
+        local cares = false
+        if not cares then
+            cares = true
+            local function GetModelFor(class)
+                local ent = scripted_ents.Get(class or "")
+                if not ent then return end
+                local m = ent.Model or ent.Models
+                if istable(m) then m = m[1] end
+                return isstring(m) and m or nil
+            end
+
+            local model = GetModelFor("sent_garagedoor")
+            util.PrecacheModel(model)
+            RustOfficial.GhostGD.Ghost = ClientsideModel(model, RENDERGROUP_TRANSLUCENT)
+            RustOfficial.GhostGD.GhostModel = model
+            RustOfficial.GhostGD.Ghost:SetRenderMode(RENDERMODE_TRANSALPHA)
+            RustOfficial.GhostGD.Ghost:SetColor(Color(255, 255, 255, 120))
+            ply.SelectedGarageDoor = true
+        end
+    end)
+
+    hook.Add("Think", "GarageDoor", function()
+        local ply = LocalPlayer()
+        if not RustOfficial.GhostGD then RustOfficial.GhostGD = {} end
+        if ply.SelectedGarageDoor == nil then ply.SelectedGarageDoor = false end
+        --RustOfficial.ITEMS.GarageDoor.func(ply)
+        if not ply.CoolDownCDL then ply.CoolDownCD = 0 end
+        if ply.SelectedGarageDoor then
+            local pos, ang = DEPLOY:GetSocket(ply, "sent_garagedoor")
+            if not isvector(pos) or not isangle(ang) then return end
+            RustOfficial.GhostGD.Ghost:SetPos(pos)
+            RustOfficial.GhostGD.Ghost:SetAngles(ang)
+            if ply:KeyDown(IN_ATTACK) and ply.CoolDownCD <= CurTime() then
+                ply.SelectedGarageDoor = false
+                net.Start("GarageDoorPlaceL")
+                net.WriteVector(pos)
+                net.WriteAngle(ang)
+                net.SendToServer()
+                ply.CoolDownCD = CurTime() + 1
+            end
+        elseif ply.SelectedGarageDoor == false then
+            if IsValid(RustOfficial.GhostGD.Ghost) then
+                RustOfficial.GhostGD.Ghost:Remove()
+                RustOfficial.GhostGD.Ghost = nil
+            end
+        end
+    end)
 end
