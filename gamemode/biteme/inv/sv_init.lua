@@ -263,7 +263,7 @@ end
 
 function DeleteItemInventory(ply, item)
     local tbl, bool, cont, slot = findInvSlot(ply, item)
-    print(tbl, bool, cont, slot)
+    if not bool then return end
     ply.GInv[slot][cont] = nil
     SendInv(ply)
 end
@@ -463,9 +463,10 @@ hook.Add("PlayerSpawn", "sendinv", function(ply)
     ply.SelectedITEMS = {}
     AddItemsToGmod(ply, HOT, 1, "Rock", math.random(50, 60), "rust_rock", 1)
     AddItemsToGmod(ply, INV, 1, "GarageDoor", math.random(50, 60), nil, 1)
-    AddItemsToGmod(ply, INV, 1, "GarageDoor", math.random(50, 60), nil, 2)
-    AddItemsToGmod(ply, INV, 1, "GarageDoor", math.random(50, 60), nil, 3)
-    AddItemsToGmod(ply, INV, 2, "Builder", math.random(50, 60), nil, 1)
+    AddItemsToGmod(ply, INV, 2, "GarageDoor", math.random(50, 60), nil, 1)
+    AddItemsToGmod(ply, INV, 3, "GarageDoor", math.random(50, 60), nil, 1)
+    AddItemsToGmod(ply, INV, 4, "Builder", math.random(50, 60), nil, 1)
+    AddItemsToGmod(ply, INV, 5, "Hammer", math.random(50, 60), nil, 1)
     ply:Give("rust_hands")
     ply:SetHealth(math.random(45, 65))
     ply.Food = math.random(60, 80)

@@ -25,6 +25,17 @@ RustOfficial.ITEMS = {
         Craftable = true,
         BluePrint = false,
     },
+    Hammer = {
+        name = "Rock",
+        color = Color(200, 60, 60),
+        image = "materials/items/tools/hammer.png",
+        func = function(ply) ply:Give("rust_hammer") end,
+        weapon = "rust_hammer",
+        Max = 1,
+        wModel = "models/weapons/darky_m/rust/w_hammer.mdl",
+        Craftable = true,
+        BluePrint = false,
+    },
     Wood = {
         name = "Wood",
         color = Color(200, 60, 60),

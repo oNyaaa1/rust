@@ -263,16 +263,16 @@ function DEPLOY:GetSocket(ply, class)
     if IsValid(ent) and not ent:IsWorld() and not self.SkipUpper[class] then
         local top = ent:LocalToWorld(Vector(0, 0, ent:OBBMaxs().z))
         top.z = top.z + (self.ClassZ[class] or self.DefaultZ)
-        return top, Angle(0, ent:GetAngles().y, 0), "upper"
+        return top, Angle(0, ent:GetAngles().y, 0), "upper", tr.Entity
     end
 
     local fallbackPos = tr.HitPos + tr.HitNormal * 32
     local fallbackAng = Angle(0, ply:GetAngles().yaw, 0)
     if class == "sent_garagedoor" then
         local door = self:GetDoorwayL(ply)
-        if not IsValid(door) then return fallbackPos, fallbackAng, "none" end
+        if not IsValid(door) then return fallbackPos, fallbackAng, "none", tr.Entity end
         local pos, ang = LocalToWorld(self.GarageOffset, Angle(0, 0, 0), door:GetPos(), door:GetAngles())
-        return pos, ang, "doorwayl"
+        return pos, ang, "doorwayl", tr.Entity
     end
 
     if not IsValid(base) or not (self.BaseClasses and self.BaseClasses[base:GetClass()]) then
@@ -282,12 +282,12 @@ function DEPLOY:GetSocket(ply, class)
             return pos, fallbackAng, "worldspawn"
         end
 
-        if not IsValid(ent) then return tr.HitPos, ply:GetAngles(), "none" end
+        if not IsValid(ent) then return tr.HitPos, ply:GetAngles(), "none", tr.Entity end
     end
 
     local baseClass = base:GetClass()
     local allowed = self.AllowedOn[baseClass]
-    if allowed and not allowed[class] then return fallbackPos, fallbackAng, "none" end
+    if allowed and not allowed[class] then return fallbackPos, fallbackAng, "none", tr.Entity end
     -- pick the edge from where you are aiming on the base
     local fYaw = base:GetAngles().y
     local lp = base:WorldToLocal(tr.HitPos)
@@ -318,6 +318,6 @@ function DEPLOY:GetSocket(ply, class)
         ang = Angle(0, fYaw + edge.yaw + rot, 0)
     end
 
-    if self:BlockedByDoorwayL(class, worldPos) or self:EdgeOccupied(class, worldPos) then return fallbackPos, fallbackAng, "none" end
-    return worldPos, ang, name
+    if self:BlockedByDoorwayL(class, worldPos) or self:EdgeOccupied(class, worldPos) then return fallbackPos, fallbackAng, "none", tr.Entity end
+    return worldPos, ang, name, tr.Entity
 end
