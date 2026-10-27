@@ -18,7 +18,9 @@ RadialMenu2.Items = {
         name = "Wood",
         class = "woodUpgrade",
         Mat = Material("materials/items/resources/wood.png", "nobip smooth"),
+        Sound = "building/hammer_saw_1.wav",
         Model = {
+            ["sent_foundation"] = "models/building_re/wood_foundation.mdl",
             ["sent_wall"] = "models/building_re/wood_wall.mdl",
         },
     },
@@ -26,7 +28,9 @@ RadialMenu2.Items = {
         name = "Stone",
         class = "StoneUpgrade",
         Mat = Material("materials/items/resources/stone.png", "nobip smooth"),
+        Sound = "building/rust_stone_1.wav",
         Model = {
+            ["sent_foundation"] = "models/building_re/stone_foundation.mdl",
             ["sent_wall"] = "models/building_re/stone_wall.mdl",
         },
     },
@@ -34,7 +38,9 @@ RadialMenu2.Items = {
         name = "Sheet Metal",
         class = "SheetMetalUpgrade",
         Mat = Material("materials/items/resources/metal_fragments.png", "nobip smooth"),
+        Sound = "building/rust_metal_1.wav",
         Model = {
+            ["sent_foundation"] = "models/building_re/metal_foundation.mdl",
             ["sent_wall"] = "models/building_re/metal_wall.mdl",
         },
     },
@@ -42,7 +48,9 @@ RadialMenu2.Items = {
         name = "Armored",
         class = "ArmoredUpgrade",
         Mat = Material("materials/items/resources/hqmetal.png", "nobip smooth"),
+        Sound = "building/rust_metal_3.wav",
         Model = {
+            ["sent_foundation"] = "models/building_re/hq_foundation.mdl",
             ["sent_wall"] = "models/building_re/hq_wall.mdl",
         },
     },
@@ -91,6 +99,29 @@ if SERVER then
                 ent:PhysicsInitStatic(SOLID_VPHYSICS)
                 ent:SetMoveType(MOVETYPE_NONE)
                 ent:SetSolid(SOLID_VPHYSICS)
+                ply:EmitSound(v.Sound)
+                function ent:Draw(flags)
+                    -- Draw the model
+                    self:DrawModel(flags)
+                    local WALL_LENGTH = 137.78 + 14 -- match your DEPLOY.ClassDist entry for the wall class
+                    local mins, maxs = self:OBBMins(), self:OBBMaxs()
+                    local sx, sy = maxs.x - mins.x, maxs.y - mins.y
+                    local len = math.max(sx, sy)
+                    if len > 0 and len < WALL_LENGTH then
+                        local ak = WALL_LENGTH / len
+                        -- scale only the longer horizontal axis; thickness and height stay as-is
+                        local WALL_HEIGHT = 140.78 -- set to your floor-to-ceiling distance
+                        local sz = maxs.z - mins.z
+                        local kz = (sz > 0 and sz < WALL_HEIGHT) and (WALL_HEIGHT / sz) or 1
+                        self:SetRenderBounds(Vector(mins.x * ak, mins.y * ak, mins.z * kz), Vector(maxs.x * ak, maxs.y * ak, maxs.z * kz))
+                        local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
+                        local m = Matrix()
+                        m:Translate(pivot)
+                        m:Scale(sx >= sy and Vector(ak, 1, kz) or Vector(1, ak, kz))
+                        m:Translate(-pivot)
+                        self:EnableMatrix("RenderMultiply", m)
+                    end
+                end
             end
         end
     end)
