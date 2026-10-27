@@ -221,6 +221,38 @@ function DEPLOY:SetSocket(ply, class, pos, ang)
     return ent
 end
 
+DEPLOY.LevelHeight = 128
+DEPLOY.FoundationRaise = 32 -- max height (looking far)
+DEPLOY.FoundationLower = 0 -- never below the surface
+DEPLOY.PitchFar = 5 -- pitch at or below this = max height (32)
+DEPLOY.PitchNear = 27 -- pitch at or above this = 0 (your natural ground-looking pitch)
+DEPLOY.FoundationSnap = 16 -- steps of 0 / 16 / 32 (set 0 for smooth)
+function DEPLOY:GetLevelOffset(ply, class, baseClass)
+    local pitch = ply:EyeAngles().p
+    if class == "sent_foundation" then
+        local off = math.Remap(math.Clamp(pitch, self.PitchFar, self.PitchNear), self.PitchFar, self.PitchNear, self.FoundationRaise, -self.FoundationLower)
+        if self.FoundationSnap > 0 then off = math.Round(off / self.FoundationSnap) * self.FoundationSnap end
+        return off
+    end
+
+    -- other pieces: simple up/down by one storey
+    if pitch <= -25 then
+        return self.LevelHeight
+    elseif pitch >= 60 and baseClass ~= "sent_foundation" then
+        return -self.LevelHeight
+    end
+    return 0
+end
+
+DEPLOY.SkipUpper = {
+    sent_foundation = true,
+    sent_wall = false,
+    sent_door = true,
+    sent_doorway = true,
+    sent_doorwayl = true,
+    sent_garagedoor = true,
+}
+
 function DEPLOY:GetSocket(ply, class)
     if not IsValid(ply) then return end
     class = string.lower(class or "")
@@ -228,7 +260,7 @@ function DEPLOY:GetSocket(ply, class)
     local entTRR = tr.Entity ~= nil and tr.Entity:GetClass() ~= "worldspawn" and tr.Entity
     local base = entTRR or DEPLOY:GetGround(ply, class)
     local ent = tr.Entity
-    if IsValid(ent) and not ent:IsWorld() then
+    if IsValid(ent) and not ent:IsWorld() and not self.SkipUpper[class] then
         local top = ent:LocalToWorld(Vector(0, 0, ent:OBBMaxs().z))
         top.z = top.z + (self.ClassZ[class] or self.DefaultZ)
         return top, Angle(0, ent:GetAngles().y, 0), "upper"
@@ -244,7 +276,13 @@ function DEPLOY:GetSocket(ply, class)
     end
 
     if not IsValid(base) or not (self.BaseClasses and self.BaseClasses[base:GetClass()]) then
-        if class == "sent_foundation" then return tr.HitPos, fallbackAng, "worldspawn" end
+        if class == "sent_foundation" then
+            print("FOUNDATION BLOCK", ply:EyeAngles().p, self:GetLevelOffset(ply, class, "worldspawn"))
+            local offset = self:GetLevelOffset(ply, class, "worldspawn")
+            local pos = Vector(tr.HitPos.x, tr.HitPos.y, ply:GetPos().z + offset)
+            return pos, fallbackAng, "worldspawn"
+        end
+
         if not IsValid(ent) then return tr.HitPos, ply:GetAngles(), "none" end
     end
 
@@ -272,6 +310,7 @@ function DEPLOY:GetSocket(ply, class)
         worldPos.z = base:GetPos().z + (self.ClassZ[class] or self.DefaultZ)
     end
 
+    -- worldPos.z = worldPos.z + self:GetLevelOffset(ply, baseClass)
     local rot = self.ClassRot[class] or 0
     local ang
     if self.ClassFaceEdge[class] == false then
