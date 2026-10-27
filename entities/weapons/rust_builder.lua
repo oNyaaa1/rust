@@ -31,14 +31,14 @@ function SWEP:GetSelectedClass()
 end
 
 function SWEP:PrimaryAttack()
-    self:SetNextPrimaryFire(CurTime() + 0.4)
+    self:SetNextPrimaryFire(CurTime() + 0.5)
     if CLIENT then return end
     local ply = self:GetOwner()
-    if not IsValid(ply) then return end
     local class = self:GetSelectedClass()
-    local pos, ang = DEPLOY:GetSocket(ply, class)
-    if not pos then return end
-    DEPLOY:SetSocket(ply, class, pos, ang) -- was hardcoded to "sent_foundation"
+    local pos, ang, text = DEPLOY:GetSocket(ply, class)
+    if not pos or text == "none" then return end
+    DEPLOY:SetSocket(ply, class, pos, ang)
+    ply:EmitSound("building/hammer_saw_" .. math.random(1, 3) .. ".wav")
 end
 
 -- Right click: cycle item
@@ -74,6 +74,7 @@ function SWEP:Think()
     if not IsValid(ply) or ply ~= LocalPlayer() then return end
     local class = self:GetSelectedClass()
     local model = GetModelFor(class)
+    local ent = ply:GetEyeTrace()
     local pos, ang, text = DEPLOY:GetSocket(ply, class)
     if not model or not pos then
         self:RemoveGhost()
@@ -87,11 +88,13 @@ function SWEP:Think()
         self.Ghost = ClientsideModel(model, RENDERGROUP_TRANSLUCENT)
         self.GhostModel = model
         self.Ghost:SetRenderMode(RENDERMODE_TRANSALPHA)
-        if text == "none" then
-            self.Ghost:SetColor(Color(255, 0, 0, 120))
-        else
-            self.Ghost:SetColor(Color(0, 255, 0, 120))
-        end
+    end
+
+    -- update colour every frame so it reacts to blocked spots
+    if text == "none" then
+        self.Ghost:SetColor(Color(255, 0, 0, 120))
+    else
+        self.Ghost:SetColor(Color(0, 255, 0, 120))
     end
 
     self.Ghost:SetPos(pos)
