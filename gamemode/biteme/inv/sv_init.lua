@@ -177,7 +177,6 @@ end
 -- returns cont, slot, existing  (or nil if there is no room anywhere)
 function FindItems(ply, item)
     local def = RustOfficial.GetItem(item)
-    PrintTable(def)
     if not def then return nil end
     for _, cont in ipairs(SEARCH) do
         for _, v in pairs(ply.GInv[def.slot]) do
@@ -213,6 +212,7 @@ function FindItem(ply, item)
     for _, cont in ipairs(order) do
         for i = 1, SIZE[cont] do
             local it = GetItem(ply, cont, i)
+            print(it)
             if it and it.id == item and (it.Count or 1) < max then return cont, i, true end
         end
     end
@@ -238,15 +238,41 @@ function FindItemsNew(ply, item)
     return nil
 end
 
-function DeleteItem(ply, item)
-    local itm, num, bool = FindItem(ply, item)
-    if bool then
-        ply.GInv[num][itm] = nil
-        SendInv(ply)
-        return true
+local function findInvSlot(ply, item)
+    local inv = ply.GInv
+    local works = {}
+    local cont = ""
+    local slot = 0
+    local bool = false
+    for new = 1, 50 do
+        if inv[new] == nil then continue end
+        for k, v in pairs(SIZE) do
+            for i = 1, #inv[new] do
+                if istable(inv[i][k]) then
+                    works = inv[i][k]
+                    slot = i
+                    cont = k
+                    bool = true
+                    break
+                end
+            end
+        end
     end
-    return false
-    --ply.GInv[slot][cont]
+    return works, bool, cont, slot
+end
+
+function DeleteItemInventory(ply, item)
+    local tbl, bool, cont, slot = findInvSlot(ply, item)
+    print(tbl, bool, cont, slot)
+    ply.GInv[slot][cont] = nil
+    SendInv(ply)
+end
+
+function DeleteItem(ply, item)
+    local cont, slot = ply.SelectedITEMS[1][1], ply.SelectedITEMS[1][2]
+    ply.GInv[slot][cont] = nil
+    SendInv(ply)
+    --ply.GInv[slot][cont]]
 end
 
 -- add into 

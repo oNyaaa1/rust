@@ -277,7 +277,6 @@ function DEPLOY:GetSocket(ply, class)
 
     if not IsValid(base) or not (self.BaseClasses and self.BaseClasses[base:GetClass()]) then
         if class == "sent_foundation" then
-            print("FOUNDATION BLOCK", ply:EyeAngles().p, self:GetLevelOffset(ply, class, "worldspawn"))
             local offset = self:GetLevelOffset(ply, class, "worldspawn")
             local pos = Vector(tr.HitPos.x, tr.HitPos.y, ply:GetPos().z + offset)
             return pos, fallbackAng, "worldspawn"
