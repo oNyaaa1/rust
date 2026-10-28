@@ -8,7 +8,7 @@ if SERVER then
         local pos, ang, name = DEPLOY:GetSocket(ply, "sent_garagedoor")
         if name ~= "doorwayl" then return end
         DEPLOY.FItem(ply, "sent_garagedoor", pos, ang)
-        local CanDelete = DeleteItem(ply, "GarageDoor")
+        DeleteItem(ply, "GarageDoor")
         SendInv(ply)
     end)
 end

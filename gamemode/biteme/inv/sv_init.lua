@@ -212,7 +212,6 @@ function FindItem(ply, item)
     for _, cont in ipairs(order) do
         for i = 1, SIZE[cont] do
             local it = GetItem(ply, cont, i)
-            print(it)
             if it and it.id == item and (it.Count or 1) < max then return cont, i, true end
         end
     end
@@ -249,6 +248,7 @@ local function findInvSlot(ply, item)
         for k, v in pairs(SIZE) do
             for i = 1, #inv[new] do
                 if istable(inv[i][k]) then
+                    PrintTable(inv[i][k])
                     works = inv[i][k]
                     slot = i
                     cont = k
@@ -261,18 +261,27 @@ local function findInvSlot(ply, item)
     return works, bool, cont, slot
 end
 
-function DeleteItemInventory(ply, item)
-    local tbl, bool, cont, slot = findInvSlot(ply, item)
-    if not bool then return end
-    ply.GInv[slot][cont] = nil
-    SendInv(ply)
-end
+function DeleteItem(ply, itemID)
+    local sel = ply.SelectedITEMS and ply.SelectedITEMS[1]
+    if not sel then return false end
+    local s = ply.GInv and ply.GInv[sel[2]]
+    local it = s and s[sel[1]]
+    local wep = ply:GetActiveWeapon()
+    if not it or it.id ~= itemID then -- selected item isn't the door, delete nothing
+        return false
+    end
 
-function DeleteItem(ply, item)
-    local cont, slot = ply.SelectedITEMS[1][1], ply.SelectedITEMS[1][2]
-    ply.GInv[slot][cont] = nil
-    SendInv(ply)
-    --ply.GInv[slot][cont]]
+    if it.id == "GarageDoor" and wep:GetClass() == "rust_hands" then
+        s[sel[1]] = nil
+        return true
+    end
+
+    if (it.Count or 1) > 1 then
+        it.Count = it.Count - 1
+    else
+        s[sel[1]] = nil
+    end
+    return true
 end
 
 -- add into 
@@ -425,7 +434,8 @@ net.Receive("grust_MoveItem", function(_, ply)
     SetItem(ply, fromCont, from, b)
     SetItem(ply, toCont, to, a)
     -- only treat the destination as the selected slot when it is the hotbar
-    if toCont == HOT then ply.SelectedITEMS[1] = {HOT, to} end
+    local item = GetItem(ply, toCont, to)
+    if toCont == HOT then ply.SelectedITEMS[1] = {HOT, to, item.id} end
     SendInv(ply)
 end)
 
@@ -433,7 +443,7 @@ net.Receive("gRustSelectWep", function(_, ply)
     local num = net.ReadUInt(3)
     if num < 1 or num > SIZE[HOT] then return end
     local item = GetItem(ply, HOT, num)
-    ply.SelectedITEMS[1] = {HOT, num}
+    ply.SelectedITEMS[1] = {HOT, num, item.id}
     if not item then
         ply:SelectWeapon("rust_hands")
         return
@@ -442,7 +452,10 @@ net.Receive("gRustSelectWep", function(_, ply)
     local def = RustOfficial.GetItem(item.id)
     if not def then return end
     if not def.weapon then
-        if def.func then def.func(ply) end
+        if def.func then
+            def.func(ply)
+            ply:SelectWeapon("rust_hands")
+        end
         return
     end
 

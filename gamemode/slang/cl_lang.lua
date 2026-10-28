@@ -1,6 +1,5 @@
 print("LAng")
-
-/*
+--[[
 LANG.Allowed = {}
 function LANG:Refresh(files)
     hook.Run(files)
@@ -36,4 +35,4 @@ end
 hook.Add("sLangCode", "LanguageBarrier", function() RustOfficial.moco:LoadAll() end)
 LANG:AddLanguage("en", "Hello", "Hello")
 LANG:AddLanguage("ru", "Hello", "cyka blyat")
-print("Languages:", #LANG)*/
+print("Languages:", #LANG)]]
