@@ -19,9 +19,35 @@ RadialMenu2.Items = {
         class = "woodUpgrade",
         Mat = Material("materials/items/resources/wood.png", "nobip smooth"),
         Sound = "building/hammer_saw_1.wav",
+        Cost = 200,
+        HP = 500,
+        UpgradeLevel = 1,
         Model = {
-            ["sent_foundation"] = "models/building_re/wood_foundation.mdl",
-            ["sent_wall"] = "models/building_re/wood_wall.mdl",
+            ["sent_foundation"] = {"models/building_re/wood_foundation.mdl"},
+            ["sent_wall"] = {
+                "models/building_re/wood_wall.mdl",
+                DoFuncWhat = function(ent)
+                    ent:DrawModel(flags)
+                    local WALL_LENGTH = 137.78 + 14 -- match your DEPLOY.ClassDist entry for the wall class
+                    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+                    local sx, sy = maxs.x - mins.x, maxs.y - mins.y
+                    local len = math.max(sx, sy)
+                    if len > 0 and len < WALL_LENGTH then
+                        local ak = WALL_LENGTH / len
+                        -- scale only the longer horizontal axis; thickness and height stay as-is
+                        local WALL_HEIGHT = 140.78 -- set to your floor-to-ceiling distance
+                        local sz = maxs.z - mins.z
+                        local kz = (sz > 0 and sz < WALL_HEIGHT) and (WALL_HEIGHT / sz) or 1
+                        ent:SetRenderBounds(Vector(mins.x * ak, mins.y * ak, mins.z * kz), Vector(maxs.x * ak, maxs.y * ak, maxs.z * kz))
+                        local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
+                        local m = Matrix()
+                        m:Translate(pivot)
+                        m:Scale(sx >= sy and Vector(ak, 1, kz) or Vector(1, ak, kz))
+                        m:Translate(-pivot)
+                        ent:EnableMatrix("RenderMultiply", m)
+                    end
+                end
+            },
         },
     },
     {
@@ -29,9 +55,35 @@ RadialMenu2.Items = {
         class = "StoneUpgrade",
         Mat = Material("materials/items/resources/stone.png", "nobip smooth"),
         Sound = "building/rust_stone_1.wav",
+        HP = 1500,
+        Cost = 500,
+        UpgradeLevel = 2,
         Model = {
-            ["sent_foundation"] = "models/building_re/stone_foundation.mdl",
-            ["sent_wall"] = "models/building_re/stone_wall.mdl",
+            ["sent_foundation"] = {"models/building_re/stone_foundation.mdl"},
+            ["sent_wall"] = {
+                "models/building_re/stone_wall.mdl",
+                DoFuncWhat = function(ent)
+                    ent:DrawModel(flags)
+                    local WALL_LENGTH = 137.78 + 14 -- match your DEPLOY.ClassDist entry for the wall class
+                    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+                    local sx, sy = maxs.x - mins.x, maxs.y - mins.y
+                    local len = math.max(sx, sy)
+                    if len > 0 and len < WALL_LENGTH then
+                        local ak = WALL_LENGTH / len
+                        -- scale only the longer horizontal axis; thickness and height stay as-is
+                        local WALL_HEIGHT = 140.78 -- set to your floor-to-ceiling distance
+                        local sz = maxs.z - mins.z
+                        local kz = (sz > 0 and sz < WALL_HEIGHT) and (WALL_HEIGHT / sz) or 1
+                        ent:SetRenderBounds(Vector(mins.x * ak, mins.y * ak, mins.z * kz), Vector(maxs.x * ak, maxs.y * ak, maxs.z * kz))
+                        local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
+                        local m = Matrix()
+                        m:Translate(pivot)
+                        m:Scale(sx >= sy and Vector(ak, 1, kz) or Vector(1, ak, kz))
+                        m:Translate(-pivot)
+                        ent:EnableMatrix("RenderMultiply", m)
+                    end
+                end
+            },
         },
     },
     {
@@ -39,9 +91,35 @@ RadialMenu2.Items = {
         class = "SheetMetalUpgrade",
         Mat = Material("materials/items/resources/metal_fragments.png", "nobip smooth"),
         Sound = "building/rust_metal_1.wav",
+        Cost = 800,
+        HP = 3000,
+        UpgradeLevel = 3,
         Model = {
-            ["sent_foundation"] = "models/building_re/metal_foundation.mdl",
-            ["sent_wall"] = "models/building_re/metal_wall.mdl",
+            ["sent_foundation"] = {"models/building_re/metal_foundation.mdl"},
+            ["sent_wall"] = {
+                "models/building_re/metal_wall.mdl",
+                DoFuncWhat = function(ent)
+                    ent:DrawModel(flags)
+                    local WALL_LENGTH = 137.78 + 14 -- match your DEPLOY.ClassDist entry for the wall class
+                    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+                    local sx, sy = maxs.x - mins.x, maxs.y - mins.y
+                    local len = math.max(sx, sy)
+                    if len > 0 and len < WALL_LENGTH then
+                        local ak = WALL_LENGTH / len
+                        -- scale only the longer horizontal axis; thickness and height stay as-is
+                        local WALL_HEIGHT = 140.78 -- set to your floor-to-ceiling distance
+                        local sz = maxs.z - mins.z
+                        local kz = (sz > 0 and sz < WALL_HEIGHT) and (WALL_HEIGHT / sz) or 1
+                        ent:SetRenderBounds(Vector(mins.x * ak, mins.y * ak, mins.z * kz), Vector(maxs.x * ak, maxs.y * ak, maxs.z * kz))
+                        local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
+                        local m = Matrix()
+                        m:Translate(pivot)
+                        m:Scale(sx >= sy and Vector(ak, 1, kz) or Vector(1, ak, kz))
+                        m:Translate(-pivot)
+                        ent:EnableMatrix("RenderMultiply", m)
+                    end
+                end
+            },
         },
     },
     {
@@ -49,9 +127,35 @@ RadialMenu2.Items = {
         class = "ArmoredUpgrade",
         Mat = Material("materials/items/resources/hqmetal.png", "nobip smooth"),
         Sound = "building/rust_metal_3.wav",
+        Cost = 1000,
+        HP = 5000,
+        UpgradeLevel = 4,
         Model = {
-            ["sent_foundation"] = "models/building_re/hq_foundation.mdl",
-            ["sent_wall"] = "models/building_re/hq_wall.mdl",
+            ["sent_foundation"] = {"models/building_re/hq_foundation.mdl",},
+            ["sent_wall"] = {
+                "models/building_re/hq_wall.mdl",
+                DoFuncWhat = function(ent)
+                    ent:DrawModel(flags)
+                    local WALL_LENGTH = 137.78 + 14 -- match your DEPLOY.ClassDist entry for the wall class
+                    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+                    local sx, sy = maxs.x - mins.x, maxs.y - mins.y
+                    local len = math.max(sx, sy)
+                    if len > 0 and len < WALL_LENGTH then
+                        local ak = WALL_LENGTH / len
+                        -- scale only the longer horizontal axis; thickness and height stay as-is
+                        local WALL_HEIGHT = 140.78 -- set to your floor-to-ceiling distance
+                        local sz = maxs.z - mins.z
+                        local kz = (sz > 0 and sz < WALL_HEIGHT) and (WALL_HEIGHT / sz) or 1
+                        ent:SetRenderBounds(Vector(mins.x * ak, mins.y * ak, mins.z * kz), Vector(maxs.x * ak, maxs.y * ak, maxs.z * kz))
+                        local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
+                        local m = Matrix()
+                        m:Translate(pivot)
+                        m:Scale(sx >= sy and Vector(ak, 1, kz) or Vector(1, ak, kz))
+                        m:Translate(-pivot)
+                        ent:EnableMatrix("RenderMultiply", m)
+                    end
+                end
+            },
         },
     },
 }
@@ -84,6 +188,7 @@ end
 
 -- ================= SERVER =================
 if SERVER then
+    util.AddNetworkString("gRust_RadialDeployment")
     util.AddNetworkString("RadialMenu2_Spawn")
     net.Receive("RadialMenu2_Spawn", function(_, ply)
         if not IsValid(ply) or not ply:Alive() then return end
@@ -94,33 +199,26 @@ if SERVER then
         local upgr = net.ReadString()
         local a, b, c, ent = DEPLOY:GetSocket(ply, tr.Entity:GetClass())
         for k, v in pairs(RadialMenu2.Items) do
-            if v.class == upgr and v.Model[tr.Entity:GetClass()] then
-                ent:SetModel(v.Model[tr.Entity:GetClass()])
+            if v.class == upgr and v.Model[tr.Entity:GetClass()] ~= nil then
+                if not IsValid(ent) then return end
+                local curLevel = ent.Upgradelevel or 0
+                if v.UpgradeLevel and v.UpgradeLevel <= curLevel then -- same or lower: refuse
+                    return
+                end
+
+                ent.Upgradelevel = v.UpgradeLevel
+                net.Start("gRust_RadialDeployment")
+                net.WriteEntity(ent)
+                net.WriteFloat(ent.Upgradelevel)
+                net.Send(ply)
+                ent:SetModel(v.Model[tr.Entity:GetClass()][1])
+                ent:SetHealth(v.HP)
                 ent:PhysicsInitStatic(SOLID_VPHYSICS)
                 ent:SetMoveType(MOVETYPE_NONE)
                 ent:SetSolid(SOLID_VPHYSICS)
                 ply:EmitSound(v.Sound)
-                function ent:Draw(flags)
-                    -- Draw the model
-                    self:DrawModel(flags)
-                    local WALL_LENGTH = 137.78 + 14 -- match your DEPLOY.ClassDist entry for the wall class
-                    local mins, maxs = self:OBBMins(), self:OBBMaxs()
-                    local sx, sy = maxs.x - mins.x, maxs.y - mins.y
-                    local len = math.max(sx, sy)
-                    if len > 0 and len < WALL_LENGTH then
-                        local ak = WALL_LENGTH / len
-                        -- scale only the longer horizontal axis; thickness and height stay as-is
-                        local WALL_HEIGHT = 140.78 -- set to your floor-to-ceiling distance
-                        local sz = maxs.z - mins.z
-                        local kz = (sz > 0 and sz < WALL_HEIGHT) and (WALL_HEIGHT / sz) or 1
-                        self:SetRenderBounds(Vector(mins.x * ak, mins.y * ak, mins.z * kz), Vector(maxs.x * ak, maxs.y * ak, maxs.z * kz))
-                        local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
-                        local m = Matrix()
-                        m:Translate(pivot)
-                        m:Scale(sx >= sy and Vector(ak, 1, kz) or Vector(1, ak, kz))
-                        m:Translate(-pivot)
-                        self:EnableMatrix("RenderMultiply", m)
-                    end
+                function ent:Draw()
+                    if v.Model[tr.Entity:GetClass()].DoFuncWhat then v.Model[tr.Entity:GetClass()].DoFuncWhat(self) end
                 end
             end
         end
@@ -193,12 +291,6 @@ local function CloseMenu(doSelect)
     if not open then return end
     open = false
     gui.EnableScreenClicker(false)
-    if doSelect and selected > 0 then
-        -- net.Start("RadialMenu2_Spawn")
-        --net.WriteUInt(selected, 8)
-        --net.SendToServer()
-        -- surface.PlaySound("buttons/button15.wav")
-    end
 end
 
 -- optional manual bind: bind g +radial   (releasing the key does nothing)
@@ -238,8 +330,17 @@ hook.Add("GUIMousePressed", "RadialMenu2_Click", function(code)
     end
 end)
 
+local col_H_D, col_ReColor = {}, {}
+net.Receive("gRust_RadialDeployment", function()
+    local ent = net.ReadEntity()
+    local level = net.ReadFloat()
+    col_H_D[ent] = level
+end)
+
 hook.Add("HUDPaint", "RadialMenu2_Draw", function()
     if not open then return end
+    local ply = LocalPlayer()
+    if not IsValid(ply) then return end
     local items = RadialMenu2.Items
     local n = #items
     local seg = 360 / n
@@ -247,6 +348,8 @@ hook.Add("HUDPaint", "RadialMenu2_Draw", function()
     selected = GetSelected()
     RadialMenu2.Selected = GetSelected()
     draw.NoTexture()
+    local trEnt = ply:GetEyeTrace().Entity
+    local curLevel = IsValid(trEnt) and col_H_D[trEnt] or 1
     for i, item in ipairs(items) do
         local center = -90 + (i - 1) * seg
         local a0, a1 = center - seg / 2 + gap, center + seg / 2 - gap
@@ -256,12 +359,15 @@ hook.Add("HUDPaint", "RadialMenu2_Draw", function()
         surface.DrawPoly(ArcPoly(a0, a1, RadialMenu2.InnerRadius, r1))
         local mid = math.rad(center)
         local tr = (RadialMenu2.InnerRadius + RadialMenu2.OuterRadius) / 2
-        draw.SimpleText(item.name, "RadialMenu2_Font", cx + math.cos(mid) * tr, cy + math.sin(mid) * tr, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        local txtCol = color_white
+        if item.UpgradeLevel and item.UpgradeLevel <= curLevel then
+            txtCol = Color(64, 64, 64, 255) -- same or lower level: blacked out
+        end
+
+        draw.SimpleText(item.name, "RadialMenu2_Font", cx + math.cos(mid) * tr, cy + math.sin(mid) * tr, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end
 
-    local label = selected > 0 and items[selected].class or "Right-click to cancel"
     local mat = items[selected] ~= nil and items[selected].Mat or ""
-    -- draw.SimpleText(label, "RadialMenu2_Center", cx, cy, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     if mat == "" then return end
     surface.SetMaterial(mat)
     surface.SetDrawColor(color_white)
