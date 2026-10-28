@@ -27,7 +27,7 @@ RadialMenu2.Items = {
             ["sent_wall"] = {
                 "models/building_re/wood_wall.mdl",
                 DoFuncWhat = function(ent)
-                    ent:DrawModel(flags)
+                    ent:DrawModel()
                     local WALL_LENGTH = 137.78 + 14 -- match your DEPLOY.ClassDist entry for the wall class
                     local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
                     local sx, sy = maxs.x - mins.x, maxs.y - mins.y
@@ -48,6 +48,70 @@ RadialMenu2.Items = {
                     end
                 end
             },
+            ["sent_ceiling"] = {
+                "models/building_re/wood_floor.mdl",
+                DoFuncWhat = function(ent)
+                    self:DrawModel()
+                    local SPACING = 137.78 -- must match DEPLOY.ClassDist.sent_foundation
+                    local mins, maxs = self:OBBMins(), self:OBBMaxs()
+                    local width = math.max(maxs.x - mins.x, maxs.y - mins.y)
+                    if width > 0 and width < SPACING then
+                        -- stretch only the footprint, leave thickness alone
+                        local m = Matrix()
+                        m:Scale(Vector(SPACING / width, SPACING / width, 1))
+                        self:EnableMatrix("RenderMultiply", m) -- client-side visual only
+                    end
+                end
+            },
+            ["sent_doorway"] = {
+                "models/building_re/wood_dframe.mdl",
+                DoFuncWhat = function(ent)
+                    ent:DrawModel()
+                    local WALL_LENGTH = 137.78 + 14 -- match your DEPLOY.ClassDist entry for the wall class
+                    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+                    local sx, sy = maxs.x - mins.x, maxs.y - mins.y
+                    local len = math.max(sx, sy)
+                    if len > 0 and len < WALL_LENGTH then
+                        local k = WALL_LENGTH / len
+                        -- scale only the longer horizontal axis; thickness and height stay as-is
+                        local WALL_HEIGHT = 140.78 -- set to your floor-to-ceiling distance
+                        local sz = maxs.z - mins.z
+                        local kz = (sz > 0 and sz < WALL_HEIGHT) and (WALL_HEIGHT / sz) or 1
+                        ent:SetRenderBounds(Vector(mins.x * k, mins.y * k, mins.z * kz), Vector(maxs.x * k, maxs.y * k, maxs.z * kz))
+                        local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
+                        local m = Matrix()
+                        m:Translate(pivot)
+                        m:Scale(sx >= sy and Vector(k, 1, kz) or Vector(1, k, kz))
+                        m:Translate(-pivot)
+                        ent:EnableMatrix("RenderMultiply", m)
+                    end
+                end
+            },
+            ["sent_doorwayl"] = {
+                "models/building_re/wood_gframe.mdl",
+                DoFuncWhat = function(ent)
+                    ent:DrawModel(flags)
+                    local WALL_LENGTH = 137.78 + 14 -- match your DEPLOY.ClassDist entry for the wall class
+                    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+                    local sx, sy = maxs.x - mins.x, maxs.y - mins.y
+                    local len = math.max(sx, sy)
+                    if len > 0 and len < WALL_LENGTH then
+                        local k = WALL_LENGTH / len
+                        -- scale only the longer horizontal axis; thickness and height stay as-is
+                        local WALL_HEIGHT = 140.78 -- set to your floor-to-ceiling distance
+                        local sz = maxs.z - mins.z
+                        local kz = (sz > 0 and sz < WALL_HEIGHT) and (WALL_HEIGHT / sz) or 1
+                        ent:SetRenderBounds(Vector(mins.x * k, mins.y * k, mins.z * kz), Vector(maxs.x * k, maxs.y * k, maxs.z * kz))
+                        local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
+                        local m = Matrix()
+                        m:Translate(pivot)
+                        m:Scale(sx >= sy and Vector(k, 1, kz) or Vector(1, k, kz))
+                        m:Translate(-pivot)
+                        ent:EnableMatrix("RenderMultiply", m)
+                    end
+                end
+            },
+            ["sent_stairs"] = {"models/building_re/wood_lst.mdl",},
         },
     },
     {
@@ -84,6 +148,70 @@ RadialMenu2.Items = {
                     end
                 end
             },
+            ["sent_ceiling"] = {
+                "models/building_re/stone_floor.mdl",
+                DoFuncWhat = function(ent)
+                    ent:DrawModel()
+                    local SPACING = 137.78 -- must match DEPLOY.ClassDist.sent_foundation
+                    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+                    local width = math.max(maxs.x - mins.x, maxs.y - mins.y)
+                    if width > 0 and width < SPACING then
+                        -- stretch only the footprint, leave thickness alone
+                        local m = Matrix()
+                        m:Scale(Vector(SPACING / width, SPACING / width, 1))
+                        ent:EnableMatrix("RenderMultiply", m) -- client-side visual only
+                    end
+                end
+            },
+            ["sent_doorway"] = {
+                "models/building_re/stone_dframe.mdl",
+                DoFuncWhat = function(ent)
+                    ent:DrawModel()
+                    local WALL_LENGTH = 137.78 + 14 -- match your DEPLOY.ClassDist entry for the wall class
+                    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+                    local sx, sy = maxs.x - mins.x, maxs.y - mins.y
+                    local len = math.max(sx, sy)
+                    if len > 0 and len < WALL_LENGTH then
+                        local k = WALL_LENGTH / len
+                        -- scale only the longer horizontal axis; thickness and height stay as-is
+                        local WALL_HEIGHT = 140.78 -- set to your floor-to-ceiling distance
+                        local sz = maxs.z - mins.z
+                        local kz = (sz > 0 and sz < WALL_HEIGHT) and (WALL_HEIGHT / sz) or 1
+                        ent:SetRenderBounds(Vector(mins.x * k, mins.y * k, mins.z * kz), Vector(maxs.x * k, maxs.y * k, maxs.z * kz))
+                        local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
+                        local m = Matrix()
+                        m:Translate(pivot)
+                        m:Scale(sx >= sy and Vector(k, 1, kz) or Vector(1, k, kz))
+                        m:Translate(-pivot)
+                        ent:EnableMatrix("RenderMultiply", m)
+                    end
+                end
+            },
+            ["sent_doorwayl"] = {
+                "models/building_re/stone_gframe.mdl",
+                DoFuncWhat = function(ent)
+                    ent:DrawModel(flags)
+                    local WALL_LENGTH = 137.78 + 14 -- match your DEPLOY.ClassDist entry for the wall class
+                    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+                    local sx, sy = maxs.x - mins.x, maxs.y - mins.y
+                    local len = math.max(sx, sy)
+                    if len > 0 and len < WALL_LENGTH then
+                        local k = WALL_LENGTH / len
+                        -- scale only the longer horizontal axis; thickness and height stay as-is
+                        local WALL_HEIGHT = 140.78 -- set to your floor-to-ceiling distance
+                        local sz = maxs.z - mins.z
+                        local kz = (sz > 0 and sz < WALL_HEIGHT) and (WALL_HEIGHT / sz) or 1
+                        ent:SetRenderBounds(Vector(mins.x * k, mins.y * k, mins.z * kz), Vector(maxs.x * k, maxs.y * k, maxs.z * kz))
+                        local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
+                        local m = Matrix()
+                        m:Translate(pivot)
+                        m:Scale(sx >= sy and Vector(k, 1, kz) or Vector(1, k, kz))
+                        m:Translate(-pivot)
+                        ent:EnableMatrix("RenderMultiply", m)
+                    end
+                end
+            },
+            ["sent_stairs"] = {"models/building_re/stone_lst.mdl",},
         },
     },
     {
@@ -120,6 +248,70 @@ RadialMenu2.Items = {
                     end
                 end
             },
+            ["sent_ceiling"] = {
+                "models/building_re/metal_floor.mdl",
+                DoFuncWhat = function(ent)
+                    ent:DrawModel()
+                    local SPACING = 137.78 -- must match DEPLOY.ClassDist.sent_foundation
+                    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+                    local width = math.max(maxs.x - mins.x, maxs.y - mins.y)
+                    if width > 0 and width < SPACING then
+                        -- stretch only the footprint, leave thickness alone
+                        local m = Matrix()
+                        m:Scale(Vector(SPACING / width, SPACING / width, 1))
+                        ent:EnableMatrix("RenderMultiply", m) -- client-side visual only
+                    end
+                end
+            },
+            ["sent_doorway"] = {
+                "models/building_re/metal_dframe.mdl",
+                DoFuncWhat = function(ent)
+                    ent:DrawModel()
+                    local WALL_LENGTH = 137.78 + 14 -- match your DEPLOY.ClassDist entry for the wall class
+                    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+                    local sx, sy = maxs.x - mins.x, maxs.y - mins.y
+                    local len = math.max(sx, sy)
+                    if len > 0 and len < WALL_LENGTH then
+                        local k = WALL_LENGTH / len
+                        -- scale only the longer horizontal axis; thickness and height stay as-is
+                        local WALL_HEIGHT = 140.78 -- set to your floor-to-ceiling distance
+                        local sz = maxs.z - mins.z
+                        local kz = (sz > 0 and sz < WALL_HEIGHT) and (WALL_HEIGHT / sz) or 1
+                        ent:SetRenderBounds(Vector(mins.x * k, mins.y * k, mins.z * kz), Vector(maxs.x * k, maxs.y * k, maxs.z * kz))
+                        local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
+                        local m = Matrix()
+                        m:Translate(pivot)
+                        m:Scale(sx >= sy and Vector(k, 1, kz) or Vector(1, k, kz))
+                        m:Translate(-pivot)
+                        ent:EnableMatrix("RenderMultiply", m)
+                    end
+                end
+            },
+            ["sent_doorwayl"] = {
+                "models/building_re/metal_gframe.mdl",
+                DoFuncWhat = function(ent)
+                    ent:DrawModel(flags)
+                    local WALL_LENGTH = 137.78 + 14 -- match your DEPLOY.ClassDist entry for the wall class
+                    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+                    local sx, sy = maxs.x - mins.x, maxs.y - mins.y
+                    local len = math.max(sx, sy)
+                    if len > 0 and len < WALL_LENGTH then
+                        local k = WALL_LENGTH / len
+                        -- scale only the longer horizontal axis; thickness and height stay as-is
+                        local WALL_HEIGHT = 140.78 -- set to your floor-to-ceiling distance
+                        local sz = maxs.z - mins.z
+                        local kz = (sz > 0 and sz < WALL_HEIGHT) and (WALL_HEIGHT / sz) or 1
+                        ent:SetRenderBounds(Vector(mins.x * k, mins.y * k, mins.z * kz), Vector(maxs.x * k, maxs.y * k, maxs.z * kz))
+                        local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
+                        local m = Matrix()
+                        m:Translate(pivot)
+                        m:Scale(sx >= sy and Vector(k, 1, kz) or Vector(1, k, kz))
+                        m:Translate(-pivot)
+                        ent:EnableMatrix("RenderMultiply", m)
+                    end
+                end
+            },
+            ["sent_stairs"] = {"models/building_re/metal_lst.mdl",},
         },
     },
     {
@@ -156,6 +348,70 @@ RadialMenu2.Items = {
                     end
                 end
             },
+            ["sent_ceiling"] = {
+                "models/building_re/hq_floor.mdl",
+                DoFuncWhat = function(ent)
+                    ent:DrawModel()
+                    local SPACING = 137.78 -- must match DEPLOY.ClassDist.sent_foundation
+                    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+                    local width = math.max(maxs.x - mins.x, maxs.y - mins.y)
+                    if width > 0 and width < SPACING then
+                        -- stretch only the footprint, leave thickness alone
+                        local m = Matrix()
+                        m:Scale(Vector(SPACING / width, SPACING / width, 1))
+                        ent:EnableMatrix("RenderMultiply", m) -- client-side visual only
+                    end
+                end
+            },
+            ["sent_doorway"] = {
+                "models/building_re/hq_dframe.mdl",
+                DoFuncWhat = function(ent)
+                    ent:DrawModel()
+                    local WALL_LENGTH = 137.78 + 14 -- match your DEPLOY.ClassDist entry for the wall class
+                    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+                    local sx, sy = maxs.x - mins.x, maxs.y - mins.y
+                    local len = math.max(sx, sy)
+                    if len > 0 and len < WALL_LENGTH then
+                        local k = WALL_LENGTH / len
+                        -- scale only the longer horizontal axis; thickness and height stay as-is
+                        local WALL_HEIGHT = 140.78 -- set to your floor-to-ceiling distance
+                        local sz = maxs.z - mins.z
+                        local kz = (sz > 0 and sz < WALL_HEIGHT) and (WALL_HEIGHT / sz) or 1
+                        ent:SetRenderBounds(Vector(mins.x * k, mins.y * k, mins.z * kz), Vector(maxs.x * k, maxs.y * k, maxs.z * kz))
+                        local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
+                        local m = Matrix()
+                        m:Translate(pivot)
+                        m:Scale(sx >= sy and Vector(k, 1, kz) or Vector(1, k, kz))
+                        m:Translate(-pivot)
+                        ent:EnableMatrix("RenderMultiply", m)
+                    end
+                end
+            },
+            ["sent_doorwayl"] = {
+                "models/building_re/hq_gframe.mdl",
+                DoFuncWhat = function(ent)
+                    ent:DrawModel(flags)
+                    local WALL_LENGTH = 137.78 + 14 -- match your DEPLOY.ClassDist entry for the wall class
+                    local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+                    local sx, sy = maxs.x - mins.x, maxs.y - mins.y
+                    local len = math.max(sx, sy)
+                    if len > 0 and len < WALL_LENGTH then
+                        local k = WALL_LENGTH / len
+                        -- scale only the longer horizontal axis; thickness and height stay as-is
+                        local WALL_HEIGHT = 140.78 -- set to your floor-to-ceiling distance
+                        local sz = maxs.z - mins.z
+                        local kz = (sz > 0 and sz < WALL_HEIGHT) and (WALL_HEIGHT / sz) or 1
+                        ent:SetRenderBounds(Vector(mins.x * k, mins.y * k, mins.z * kz), Vector(maxs.x * k, maxs.y * k, maxs.z * kz))
+                        local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
+                        local m = Matrix()
+                        m:Translate(pivot)
+                        m:Scale(sx >= sy and Vector(k, 1, kz) or Vector(1, k, kz))
+                        m:Translate(-pivot)
+                        ent:EnableMatrix("RenderMultiply", m)
+                    end
+                end
+            },
+            ["sent_stairs"] = {"models/building_re/hq_lst.mdl",},
         },
     },
 }
@@ -349,7 +605,7 @@ hook.Add("HUDPaint", "RadialMenu2_Draw", function()
     RadialMenu2.Selected = GetSelected()
     draw.NoTexture()
     local trEnt = ply:GetEyeTrace().Entity
-    local curLevel = IsValid(trEnt) and col_H_D[trEnt] or 1
+    local curLevel = IsValid(trEnt) and col_H_D[trEnt] or 0
     for i, item in ipairs(items) do
         local center = -90 + (i - 1) * seg
         local a0, a1 = center - seg / 2 + gap, center + seg / 2 - gap
