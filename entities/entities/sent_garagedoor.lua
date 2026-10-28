@@ -70,6 +70,12 @@ if SERVER then
 
 		self:SetGarageDoor(open)
 		local seq = self:LookupSequence(open and "open" or "close")
+		if open then
+			self:EmitSound("doors/garage_door_open.wav")
+		else
+			self:EmitSound("doors/garage_door_loop.wav")
+		end
+
 		self:ResetSequence(seq)
 		self:SetCycle(0)
 		self:SetPlaybackRate(1)
