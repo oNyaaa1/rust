@@ -1,6 +1,7 @@
-ITEMS:RegisterItem("rust_e_rock", {
+ITEMS:RegisterItem("Rock", {
     Name = "Rock",
     Info = "Rock, Basic gathering tool.",
+    InfoTag = "Rock",
     Category = "Tools",
     model = "materials/items/tools/rock.png",
     Weapon = "rust_e_rock",
@@ -19,9 +20,10 @@ ITEMS:RegisterItem("rust_e_rock", {
     end,
 }, "Tools")
 
-ITEMS:RegisterItem("rust_buildingplan", {
+ITEMS:RegisterItem("Builder", {
     Name = "Building Plan",
     Info = "The Building Plan, For building",
+    InfoTag = "Builder",
     Category = "Tools",
     model = "materials/items/tools/building_plan.png",
     Weapon = "rust_buildingplan",
@@ -40,9 +42,10 @@ ITEMS:RegisterItem("rust_buildingplan", {
     end,
 }, "Tools")
 
-ITEMS:RegisterItem("rust_hammer", {
+ITEMS:RegisterItem("Hammer", {
     Name = "Hammer",
     Info = "Hammer, Upgrading ur base!",
+    InfoTag = "Hammer",
     Category = "Tools",
     model = "materials/items/tools/hammer.png",
     Weapon = "rust_hammer",

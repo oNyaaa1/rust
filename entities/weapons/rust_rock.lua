@@ -42,11 +42,6 @@ function SWEP:PrimaryAttack()
 end
 
 local function DroppableBag(ply, name, count, model)
-    local cont, slot = FindExistingItem(ply, name)
-    if cont then
-        GInv_RemoveItem(ply, cont, slot, 1) -- remove 1; leave out the 1 to remove the whole stack
-    end
-
     local ent = ents.Create("item_bag")
     ent:SetItemName(name)
     ent:SetSizeItem(count)
@@ -67,6 +62,7 @@ local function DroppableBag(ply, name, count, model)
         if not hasRemaining and ply:HasWeapon(wep.weapon) then ply:StripWeapon(wep.weapon) end
     end
 
+    GInv_RemoveItem(ply, name, 1) -- remove 1; leave out the 1 to remove the whole stack
     SendInv(ply)
     return ent
 end
