@@ -88,6 +88,7 @@ local TREE_MODELS = {
 local placeHolster = {5, 10, 20, 40, 80, 128}
 hook.Add("EntityTakeDamage", "TakeWoodDmg", function(ent, dmginfo)
     local dmginfo_Attk = dmginfo:GetAttacker()
+    if not IsValid(dmginfo_Attk) then return end
     local MAT = BackwardsEnums("MAT_")
     local item = RustOfficial.GetItem("Wood")
     local tr = dmginfo_Attk:GetEyeTrace()

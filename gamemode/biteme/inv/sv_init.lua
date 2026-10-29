@@ -150,14 +150,6 @@ local function RemoveFromSlot(ply, cont, slot, amount)
     return true, take
 end
 
--- remove by item id (first match, hotbar then inventory)
-function GInv_RemoveItem(ply, item, amount)
-    if not IsValid(ply) or not ply.GInv then return false, 0 end
-    local cont, slot = FindExistingItem(ply, item)
-    if not cont then return false, 0 end
-    return RemoveFromSlot(ply, cont, slot, amount)
-end
-
 -- auto-search never includes CLOTH, so resources/weapons are never auto-placed there
 local SEARCH = {HOT, INV}
 -- finds the first slot that actually contains the item
@@ -170,6 +162,14 @@ function FindExistingItem(ply, item)
         end
     end
     return nil
+end
+
+-- remove by item id (first match, hotbar then inventory)
+function GInv_RemoveItem(ply, item, amount)
+    if not IsValid(ply) or not ply.GInv then return false, 0 end
+    local cont, slot = FindExistingItem(ply, item)
+    if not cont then return false, 0 end
+    return RemoveFromSlot(ply, cont, slot, amount)
 end
 
 function GInv_RemoveAmount(ply, item, amount)

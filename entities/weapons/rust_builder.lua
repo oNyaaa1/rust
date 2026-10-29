@@ -37,6 +37,8 @@ function SWEP:PrimaryAttack()
     local class = self:GetSelectedClass()
     local pos, ang, text = DEPLOY:GetSocket(ply, class)
     if not pos or text == "none" then return end
+    local ok, taken = GInv_RemoveItem(ply, "Wood", 50)
+    if ok == false then return end
     DEPLOY:SetSocket(ply, class, pos, ang)
     ply:EmitSound("building/hammer_saw_" .. math.random(1, 3) .. ".wav")
 end

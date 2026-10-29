@@ -91,7 +91,7 @@ function SWEP:Think()
     if self.delay < CurTime() then
         local tr = pl:GetEyeTrace()
         local dist = math.Round(pl:GetShootPos():Distance(tr.HitPos))
-        if dist >= 0 and dist <= 30 and self.Clicked == true then
+        if dist >= 0 and dist <= 40 and self.Clicked == true then
             self.SWING:Stop()
             self.HIT:Play()
             local findtwig = string.find(tr.Entity:GetModel(), "twig")
