@@ -234,7 +234,15 @@ local function RightPanelInfo(parent, ITEM)
 
     Buttonzz.DoClick = function()
         net.Start("CraftingAbility")
-        net.WriteTable({ITEM.Weapon})
+        net.WriteTable({
+            {
+                Info = ITEM.InfoTag
+            },
+            {
+                Weapon = ITEM.Weapon
+            },
+        })
+
         net.WriteString(ITEM.Category)
         net.SendToServer()
     end

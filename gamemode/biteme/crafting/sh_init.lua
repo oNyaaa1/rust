@@ -21,7 +21,7 @@ if SERVER then
 		local toCraft = ""
 		local toAmount = 0
 		local toTime = 30
-		local item = ITEMS:GetItem(tbl[1])
+		local item = ITEMS:GetItem(tbl[1].Info)
 		--for k, v in pairs(item:Craft()) do
 		--	local itemz = v[1]
 		--	toCraft = itemz.ITEM
@@ -32,7 +32,7 @@ if SERVER then
 		--if Count < toAmount then return end
 		--if not item then return end
 		--timer.Simple(toTime, function()
-		AddItemsToGmod(ply, "Inventory", 1, item.InfoTag, math.random(50, 60), item.Weapon or nil, 1)
+		AddItemsToGmod(ply, "Inventory", 1, item.InfoTag, math.random(50, 60), item.Weapon, 1)
 		--end)
 		--ply:CountRemoveInventoryItem(toCraft, toAmount)
 	end)
@@ -55,10 +55,11 @@ ITEMS.Catergories = {
 }
 
 function ITEMS:RegisterItem(itemName, items, category)
+	if items.InfoTag == nil then return end
 	self[itemName] = items
 	local countz = 0
 	for k, v in pairs(ITEMS) do
-		if type(v) == "table" and v.Category == category and v.InfoTag != nil then countz = countz + 1 end
+		if type(v) == "table" and v.Category == category then countz = countz + 1 end
 	end
 
 	COUNT[string.lower(category)] = countz

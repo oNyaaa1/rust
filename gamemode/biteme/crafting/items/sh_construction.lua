@@ -479,7 +479,7 @@ ITEMS:RegisterItem("rust_deploy_metal_sf", {
 }, "Construction")
 
 
-ITEMS:RegisterItem("rust_deploy_garagedoor", {
+ITEMS:RegisterItem("GarageDoor", {
     Name = "Garage Door",
     Info = "For door",
     InfoTag = "GarageDoor",
