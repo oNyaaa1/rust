@@ -60,7 +60,8 @@ function ENT:NewWeakspot()
     end
 
     -- fallback if no trace hit: top of the rock
-    self:SetNW2Vector("Weakspot", self:LocalToWorld(Vector(0, 0, maxs.z)))
+    --self:SetNW2Vector("Weakspot", self:LocalToWorld(Vector(0, 0, maxs.z)))
+    self:SetNW2Vector("Weakspot", Vector(0, 0, maxs.z))
 end
 
 local placeHolster = {30, 60, 90, 120}
