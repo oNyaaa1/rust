@@ -92,6 +92,7 @@ hook.Add("EntityTakeDamage", "TakeWoodDmg", function(ent, dmginfo)
     local MAT = BackwardsEnums("MAT_")
     local item = RustOfficial.GetItem("Wood")
     local tr = dmginfo_Attk:GetEyeTrace()
+    if not tr.Entity then return end
     if MAT[ent:GetMaterialType()] == "MAT_WOOD" and TREE_MODELS[tr.Entity:GetModel()] then
         if ent.amount == nil then ent.amount = 0 end
         if ent.amount >= #placeHolster then ent.amount = 0 end
