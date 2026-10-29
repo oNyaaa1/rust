@@ -21,6 +21,11 @@ local function GetMaxStack(id)
     return def and def.Max or 1
 end
 
+local function ValidSlot(cont, slot)
+    local max = cont and SIZE[cont]
+    return max ~= nil and isnumber(slot) and slot >= 1 and slot <= max
+end
+
 local function GetSlot(ply, slot)
     ply.GInv = ply.GInv or {}
     ply.GInv[slot] = ply.GInv[slot] or {}
@@ -30,15 +35,18 @@ end
 local function GetSlots(ply, item)
     ply.GInv = ply.GInv or {}
     local items = nil
+    local cont = "Inventory"
     for k, v in pairs(ply.GInv) do
         for _, j in pairs(v) do
             if j["id"] == item then
+                print(k, v, _, j)
                 items = k
+                cont = _
                 break
             end
         end
     end
-    return items
+    return items, cont
 end
 
 local function GetItem(ply, cont, slot)
@@ -48,11 +56,6 @@ end
 
 local function SetItem(ply, cont, slot, item)
     GetSlot(ply, slot)[cont] = item
-end
-
-local function ValidSlot(cont, slot)
-    local max = cont and SIZE[cont]
-    return max ~= nil and slot >= 1 and slot <= max
 end
 
 -- can this item be placed in this container?
@@ -129,14 +132,13 @@ function AddItemsToGmod(ply, cont, slot, name, dur, wep, count)
     return true
 end
 
--- remove `amount` from a specific container/slot (nil amount = remove the whole stack)
--- returns removed(bool), amountRemoved
-function GInv_RemoveItem(ply, cont, slot, amount)
+local function RemoveFromSlot(ply, cont, slot, amount)
     if not IsValid(ply) or not ply.GInv then return false, 0 end
     if not ValidSlot(cont, slot) then return false, 0 end
     local it = GetItem(ply, cont, slot)
     if not it then return false, 0 end
     local have = it.Count or 1
+    if have < amount then return false, 0 end
     local take = math.min(amount or have, have)
     if take >= have then
         SetItem(ply, cont, slot, nil)
@@ -146,6 +148,14 @@ function GInv_RemoveItem(ply, cont, slot, amount)
 
     SendInv(ply)
     return true, take
+end
+
+-- remove by item id (first match, hotbar then inventory)
+function GInv_RemoveItem(ply, item, amount)
+    if not IsValid(ply) or not ply.GInv then return false, 0 end
+    local cont, slot = FindExistingItem(ply, item)
+    if not cont then return false, 0 end
+    return RemoveFromSlot(ply, cont, slot, amount)
 end
 
 -- auto-search never includes CLOTH, so resources/weapons are never auto-placed there

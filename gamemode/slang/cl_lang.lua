@@ -1,5 +1,4 @@
 print("LAng")
---[[
 LANG.Allowed = {}
 function LANG:Refresh(files)
     hook.Run(files)
@@ -23,6 +22,7 @@ concommand.Add("rust_cl", function(ply, cmd, args)
 end)
 
 function LANG:AddLanguage(lng, master, trans)
+    RustOfficial.fah = RustOfficial.fah or {}
     LANG.Allowed[lng] = true
     RustOfficial.fah[lng] = RustOfficial.fah[lng] or {}
     RustOfficial.fah[lng][master] = trans
@@ -35,4 +35,4 @@ end
 hook.Add("sLangCode", "LanguageBarrier", function() RustOfficial.moco:LoadAll() end)
 LANG:AddLanguage("en", "Hello", "Hello")
 LANG:AddLanguage("ru", "Hello", "cyka blyat")
-print("Languages:", #LANG)]]
+print("Languages:", #LANG)

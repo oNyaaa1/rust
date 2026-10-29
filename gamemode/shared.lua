@@ -1,6 +1,7 @@
 DeriveGamemode("base")
 GM.Name = "gRust | Rust in Garry's Mod"
 RustOfficial = RustOfficial or {}
+LANG = LANG or {}
 local function AddFile(File, dir)
     local fileSide = string.lower(string.Left(File, 3))
     if SERVER and fileSide == "sv_" then

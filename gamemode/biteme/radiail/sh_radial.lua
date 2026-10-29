@@ -19,7 +19,7 @@ RadialMenu2.Items = {
         class = "woodUpgrade",
         Mat = Material("materials/items/resources/wood.png", "nobip smooth"),
         Sound = "building/hammer_saw_1.wav",
-        Cost = 200,
+        Cost = {"Wood", 200},
         HP = 1000,
         UpgradeLevel = 1,
         Model = {
@@ -120,7 +120,7 @@ RadialMenu2.Items = {
         Mat = Material("materials/items/resources/stone.png", "nobip smooth"),
         Sound = "building/rust_stone_1.wav",
         HP = 1500,
-        Cost = 500,
+        Cost = {"stone", 500},
         UpgradeLevel = 2,
         Model = {
             ["sent_foundation"] = {"models/building_re/stone_foundation.mdl"},
@@ -219,7 +219,7 @@ RadialMenu2.Items = {
         class = "SheetMetalUpgrade",
         Mat = Material("materials/items/resources/metal_fragments.png", "nobip smooth"),
         Sound = "building/rust_metal_1.wav",
-        Cost = 800,
+        Cost = {"metal", 800},
         HP = 3000,
         UpgradeLevel = 3,
         Model = {
@@ -319,7 +319,7 @@ RadialMenu2.Items = {
         class = "ArmoredUpgrade",
         Mat = Material("materials/items/resources/hqmetal.png", "nobip smooth"),
         Sound = "building/rust_metal_3.wav",
-        Cost = 1000,
+        Cost = {"hq", 1000},
         HP = 5000,
         UpgradeLevel = 4,
         Model = {
@@ -456,6 +456,8 @@ if SERVER then
         local a, b, c, ent = DEPLOY:GetSocket(ply, tr.Entity:GetClass())
         for k, v in pairs(RadialMenu2.Items) do
             if v.class == upgr and v.Model[tr.Entity:GetClass()] ~= nil then
+                local ok, taken = GInv_RemoveItem(ply, v.Cost[1], v.Cost[2])
+                if ok == false then return end
                 if not IsValid(ent) then return end
                 local curLevel = ent.Upgradelevel or 0
                 if v.UpgradeLevel and v.UpgradeLevel <= curLevel then -- same or lower: refuse
