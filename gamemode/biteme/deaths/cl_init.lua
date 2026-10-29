@@ -45,7 +45,6 @@ local function OpenDeathScreen(killer)
     if IsValid(panel) then panel:Remove() end
     local ply = LocalPlayer()
     local start = CurTime()
-    local x, y = nil, nil
     panel = vgui.Create("DPanel")
     panel:SetSize(ScrW(), ScrH())
     panel:MakePopup()
