@@ -52,7 +52,6 @@ local function OpenDeathScreen(killer)
     local aliveFor = math.max(0, CurTime() - aliveSince)
     local aliveStr = string.format("%dm%02ds", math.floor(aliveFor / 60), math.floor(aliveFor % 60))
     panel.Paint = function(_, w, h)
-        local ply = LocalPlayer()
         local deathPos = ply:GetPos()
         local a = math.Clamp((CurTime() - start) / 1.0, 0, 1)
         local barH = h * BAR

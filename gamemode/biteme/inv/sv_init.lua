@@ -125,6 +125,7 @@ end
 function AddItemsToGmod(ply, cont, slot, name, dur, wep, count)
     if not ValidSlot(cont, slot) then return false end
     local def = RustOfficial.GetItem(name)
+    local ip, slot = GetEmptySlot(ply, cont)
     if not def then return false end
     SetItem(ply, cont, slot, MakeItem(name, dur, wep, count, slot))
     if wep ~= nil and def.func then def.func(ply) end
@@ -453,6 +454,7 @@ net.Receive("gRustSelectWep", function(_, ply)
     local num = net.ReadUInt(3)
     if num < 1 or num > SIZE[HOT] then return end
     local item = GetItem(ply, HOT, num)
+    if not item then return end
     ply.SelectedITEMS[1] = {HOT, num, item.id}
     if not item then
         ply:SelectWeapon("rust_hands")
@@ -485,11 +487,11 @@ hook.Add("PlayerSpawn", "sendinv", function(ply)
     ply.GInv = {}
     ply.SelectedITEMS = {}
     AddItemsToGmod(ply, HOT, 1, "Rock", math.random(50, 60), "rust_rock", 1)
-    AddItemsToGmod(ply, INV, 1, "GarageDoor", math.random(50, 60), nil, 1)
-    AddItemsToGmod(ply, INV, 2, "GarageDoor", math.random(50, 60), nil, 1)
-    AddItemsToGmod(ply, INV, 3, "GarageDoor", math.random(50, 60), nil, 1)
-    AddItemsToGmod(ply, INV, 4, "Builder", math.random(50, 60), nil, 1)
-    AddItemsToGmod(ply, INV, 5, "Hammer", math.random(50, 60), nil, 1)
+    //AddItemsToGmod(ply, INV, 1, "GarageDoor", math.random(50, 60), nil, 1)
+    //AddItemsToGmod(ply, INV, 2, "GarageDoor", math.random(50, 60), nil, 1)
+    //AddItemsToGmod(ply, INV, 3, "GarageDoor", math.random(50, 60), nil, 1)
+   // AddItemsToGmod(ply, INV, 4, "Builder", math.random(50, 60), nil, 1)
+   // AddItemsToGmod(ply, INV, 5, "Hammer", math.random(50, 60), nil, 1)
     ply:Give("rust_hands")
     ply:SetHealth(math.random(45, 65))
     ply.Food = math.random(60, 80)
