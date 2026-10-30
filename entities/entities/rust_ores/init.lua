@@ -6,16 +6,11 @@ function ENT:Initialize()
     self:SetModel("models/environment/ores/ore_node_stage1.mdl")
     self:SetSkin(math.random(1, 3))
     self:PhysicsInit(SOLID_VPHYSICS)
-    self:SetMoveType(MOVETYPE_VPHYSICS)
+    self:SetMoveType(MOVETYPE_NONE)
     self:SetSolid(SOLID_VPHYSICS)
     local phys = self:GetPhysicsObject()
     self.firsthit = false
-    if IsValid(phys) then
-        phys:Wake()
-        phys:EnableMotion(false)
-        phys:SetMass(50)
-    end
-
+    if IsValid(phys) then phys:Wake() end
     self.SetHealthz = 300
     self.SpawnTime = CurTime()
     self:NewWeakspot()
@@ -88,12 +83,67 @@ function ENT:OnTakeDamage(dmg)
         local mathd = GRUST_GetItemFromWep(attacker, "Stone")
         ent.amount = ent.amount + 1
         if mathd >= item.Max then ent.amount = 1 end
-        AddItemsToGmodCount(attacker, item.name, 100, nil, placeHolster[ent.amount])
+        if ws ~= vector_origin and attacker:GetEyeTrace().HitPos:DistToSqr(ws) < 25 * 25 then
+            AddItemsToGmodCount(attacker, item.name, 100, nil, placeHolster[ent.amount])
+        else
+            AddItemsToGmodCount(attacker, item.name, 100, nil, 30)
+        end
+    elseif self:GetSkin() == 2 then
+        local item = RustOfficial.GetItem("Sulfur")
+        if ent.amount == nil then ent.amount = 0 end
+        if ent.amount >= #placeHolster then ent.amount = 0 end
+        local mathd = GRUST_GetItemFromWep(attacker, "Stone")
+        ent.amount = ent.amount + 1
+        if mathd >= item.Max then ent.amount = 1 end
+        if ws ~= vector_origin and attacker:GetEyeTrace().HitPos:DistToSqr(ws) < 25 * 25 then
+            AddItemsToGmodCount(attacker, item.name, 100, nil, placeHolster[ent.amount])
+        else
+            AddItemsToGmodCount(attacker, item.name, 100, nil, 30)
+        end
+    else
+        local item = RustOfficial.GetItem("Metal")
+        if ent.amount == nil then ent.amount = 0 end
+        if ent.amount >= #placeHolster then ent.amount = 0 end
+        local mathd = GRUST_GetItemFromWep(attacker, "Stone")
+        ent.amount = ent.amount + 1
+        if mathd >= item.Max then ent.amount = 1 end
+        if ws ~= vector_origin and attacker:GetEyeTrace().HitPos:DistToSqr(ws) < 25 * 25 then
+            AddItemsToGmodCount(attacker, item.name, 100, nil, placeHolster[ent.amount])
+        else
+            AddItemsToGmodCount(attacker, item.name, 100, nil, 30)
+        end
     end
 
-    if self.SetHealthz <= 240 then self:SetModel("models/environment/ores/ore_node_stage2.mdl") end
-    if self.SetHealthz <= 150 then self:SetModel("models/environment/ores/ore_node_stage3.mdl") end
-    if self.SetHealthz <= 60 then self:SetModel("models/environment/ores/ore_node_stage4.mdl") end
+    if self.SetHealthz <= 240 then
+        self:SetModel("models/environment/ores/ore_node_stage2.mdl")
+        self:PhysicsInit(SOLID_VPHYSICS)
+        self:SetMoveType(MOVETYPE_NONE)
+        self:SetSolid(SOLID_VPHYSICS)
+        local phys = self:GetPhysicsObject()
+        self.firsthit = false
+        if IsValid(phys) then phys:Wake() end
+    end
+
+    if self.SetHealthz <= 150 then
+        self:SetModel("models/environment/ores/ore_node_stage3.mdl")
+        self:PhysicsInit(SOLID_VPHYSICS)
+        self:SetMoveType(MOVETYPE_NONE)
+        self:SetSolid(SOLID_VPHYSICS)
+        local phys = self:GetPhysicsObject()
+        self.firsthit = false
+        if IsValid(phys) then phys:Wake() end
+    end
+
+    if self.SetHealthz <= 60 then
+        self:SetModel("models/environment/ores/ore_node_stage4.mdl")
+        self:PhysicsInit(SOLID_VPHYSICS)
+        self:SetMoveType(MOVETYPE_NONE)
+        self:SetSolid(SOLID_VPHYSICS)
+        local phys = self:GetPhysicsObject()
+        self.firsthit = false
+        if IsValid(phys) then phys:Wake() end
+    end
+
     if self.SetHealthz <= 0 then
         self:RecoveryTime(self:GetPos())
         self:Remove()

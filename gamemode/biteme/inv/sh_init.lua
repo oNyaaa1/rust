@@ -86,6 +86,30 @@ RustOfficial.ITEMS = {
         Craftable = true,
         BluePrint = false,
     },
+    Sulfur = {
+        name = "Sulfur",
+        color = Color(200, 60, 60),
+        image = "materials/items/resources/sulfur_ore.png",
+        func = function(ply) end,
+        weapon = nil,
+        Max = 2000,
+        wModel = "models/environment/misc/loot_bag.mdl",
+        Craftable = true,
+        BluePrint = false,
+    },
+    Metal = {
+        name = "Metal",
+        color = Color(200, 60, 60),
+        image = "materials/items/resources/metal_ore.png",
+        func = function(ply) end,
+        weapon = nil,
+        Max = 2000,
+        wModel = "models/environment/misc/loot_bag.mdl",
+        Craftable = true,
+        BluePrint = false,
+    },
+    
+    
 }
 
 function RustOfficial.GetItem(key)
