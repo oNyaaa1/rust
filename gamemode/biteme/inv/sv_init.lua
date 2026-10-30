@@ -4,7 +4,7 @@ util.AddNetworkString("grust_SyncInv") -- server -> client
 util.AddNetworkString("gRustSelectWep")
 local INV, HOT, CLOTH = "Inventory", "HotBar", "Clothing"
 local SIZE = {
-    [INV] = 30,
+    [INV] = 24,
     [HOT] = 6,
     [CLOTH] = 6
 }
@@ -487,11 +487,11 @@ hook.Add("PlayerSpawn", "sendinv", function(ply)
     ply.GInv = {}
     ply.SelectedITEMS = {}
     AddItemsToGmod(ply, HOT, 1, "Rock", math.random(50, 60), "rust_rock", 1)
-    //AddItemsToGmod(ply, INV, 1, "GarageDoor", math.random(50, 60), nil, 1)
-    //AddItemsToGmod(ply, INV, 2, "GarageDoor", math.random(50, 60), nil, 1)
-    //AddItemsToGmod(ply, INV, 3, "GarageDoor", math.random(50, 60), nil, 1)
-   // AddItemsToGmod(ply, INV, 4, "Builder", math.random(50, 60), nil, 1)
-   // AddItemsToGmod(ply, INV, 5, "Hammer", math.random(50, 60), nil, 1)
+    --AddItemsToGmod(ply, INV, 1, "GarageDoor", math.random(50, 60), nil, 1)
+    --AddItemsToGmod(ply, INV, 2, "GarageDoor", math.random(50, 60), nil, 1)
+    --AddItemsToGmod(ply, INV, 3, "GarageDoor", math.random(50, 60), nil, 1)
+    -- AddItemsToGmod(ply, INV, 4, "Builder", math.random(50, 60), nil, 1)
+    -- AddItemsToGmod(ply, INV, 5, "Hammer", math.random(50, 60), nil, 1)
     ply:Give("rust_hands")
     ply:SetHealth(math.random(45, 65))
     ply.Food = math.random(60, 80)

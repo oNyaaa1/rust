@@ -6,7 +6,7 @@ SWEP.UseHands = true
 SWEP.Primary.Automatic = true
 SWEP.Primary.ClipSize = 120
 SWEP.Primary.DefaultClip = 30
-SWEP.Primary.Ammo = "AK47_AMMO"
+SWEP.Primary.Ammo = "smg1"
 function SWEP:Initialize()
     self:SetHoldType("smg")
     self.delay = 0

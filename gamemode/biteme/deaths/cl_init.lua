@@ -16,6 +16,12 @@ surface.CreateFont("RustDeath_Box", {
     weight = 700
 })
 
+surface.CreateFont("RustDeath_Btn", {
+    font = "Roboto",
+    size = ScreenScale(6),
+    weight = 700
+})
+
 local RESPAWN_DELAY = 5
 local BAR = 0.13 -- bar height as a fraction of the screen
 local panel

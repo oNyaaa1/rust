@@ -1,5 +1,5 @@
 local CONT_INV, CONT_HOT, CONT_CLOTH = 0, 1, 2
-local INV_SLOTS, HOT_SLOTS, CONT_SLOTS = 30, 6, 6
+local INV_SLOTS, HOT_SLOTS, CONT_SLOTS = 24, 6, 6
 local CONT_BITS = 2 -- 0..2 needs 2 bits. Server must ReadUInt(2) for container IDs.
 -- ===== Sync =====
 -- Server order: 30 inventory slots, 6 hotbar slots, 6 clothing slots.
@@ -147,7 +147,7 @@ vgui.Register("grust_SlotsGrid", PANEL, "Panel")
 -- ===== Main inventory (6x5 = 30) =====
 local INVENTORY = {}
 function INVENTORY:Init()
-    self:BuildSlots(6, 5, CONT_INV)
+    self:BuildSlots(6, 4, CONT_INV)
 end
 
 vgui.Register("grust_Inventory", INVENTORY, "grust_SlotsGrid")
@@ -230,17 +230,17 @@ hook.Add("ScoreboardShow", "Scoreboard_Open", function()
     slots:SetPos(5, 5)
     GRUST_SLOTS = slots
     invBox:SetSize(slots:GetWide() + 10, slots:GetTall() + 10)
-    invBox:SetPos(bg:GetWide() * 0.33, bg:GetTall() * 0.35)
+    invBox:SetPos(bg:GetWide() * 0.33, bg:GetTall() * 0.45)
     if GRUST_LASTINV then slots:SetInventory(GRUST_LASTINV) end
     -- clothing panel, to the left of the inventory
     local charBox = vgui.Create("DPanel", bg)
     charBox:Receiver("grust_item", function() end)
-    charBox.Paint = function(_, w, h) draw.RoundedBox(0, 0, 0, w, h, Color(52, 52, 52, 100)) end
+    charBox.Paint = function(_, w, h) draw.RoundedBox(0, 0, 0, w, h, Color(52, 52, 52, 0)) end
     local hb2 = vgui.Create("grust_Charbar", charBox)
     hb2:SetPos(0, 5)
     GRUST_HB2 = hb2
     charBox:SetSize(hb2:GetWide(), hb2:GetTall() + 10)
-    charBox:SetPos(math.max(10, invBox:GetX() - charBox:GetWide() - 20), invBox:GetY() + 350)
+    charBox:SetPos(math.max(10, invBox:GetX() - charBox:GetWide() - 20), invBox:GetY() + 275)
     if GRUST_LASTINV then hb2:SetInventory(GRUST_LASTINV) end
     -- hotbar on top, interactive while the inventory is open
     local hb = EnsureHotbar()
