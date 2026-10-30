@@ -165,6 +165,15 @@ function FindExistingItem(ply, item)
     return nil
 end
 
+function CalcItem(ply, item)
+    local cont, slot = FindExistingItem(ply, item)
+    local it = GetItem(ply, cont, slot)
+    if not it then return false, 0 end
+    PrintTable(it)
+    local have = it.Count or 1
+    return true, have
+end
+
 -- remove by item id (first match, hotbar then inventory)
 function GInv_RemoveItem(ply, item, amount)
     if not IsValid(ply) or not ply.GInv then return false, 0 end
