@@ -21,14 +21,14 @@ function SWEP:SetupDataTables()
 end
 
 function SWEP:Initialize()
-    self:SetHoldType("pistol")
+    self:SetHoldType("melee")
+    self:SendWeaponAnim(ACT_VM_MISSCENTER)
     self:SetSelected(1)
 end
 
 function SWEP:PrimaryAttack()
     self:SetNextPrimaryFire(CurTime() + 0.5)
     if SERVER then return end
-    local ply = self:GetOwner()
     local items = RadialMenu2.Items
     local select = items[RadialMenu2.Selected] and items[RadialMenu2.Selected].class or ""
     net.Start("RadialMenu2_Spawn")

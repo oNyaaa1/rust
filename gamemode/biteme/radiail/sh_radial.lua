@@ -453,6 +453,20 @@ if SERVER then
         ply.CooldownRMS = CurTime() + 0.1
         local tr = ply:GetEyeTrace()
         local upgr = net.ReadString()
+        if upgr == "Rotate" then
+            local ent = ply:GetEyeTrace().Entity
+            local ang = ent:GetAngles()
+            ang:RotateAroundAxis(ent:GetUp(), -180)
+            ent:SetAngles(ang)
+            return
+        end
+
+        if upgr == "Demolish" then
+            local ent = ply:GetEyeTrace().Entity
+            ent:Remove()
+            return
+        end
+
         local a, b, c, ent = DEPLOY:GetSocket(ply, tr.Entity:GetClass())
         for k, v in pairs(RadialMenu2.Items) do
             if v.class == upgr and v.Model[tr.Entity:GetClass()] ~= nil then
