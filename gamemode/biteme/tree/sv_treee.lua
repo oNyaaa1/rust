@@ -97,6 +97,25 @@ local traceData = {
 
 local traceRes = traceData.output
 local placeHolster = {5, 10, 20, 40, 80, 128}
+function FookerTreeMarker(ent, dmginfo, ply)
+    local entPos = ent:GetPos()
+    local z = ply:EyePos().z + math_random(-10, 10) -- widen/narrow this for more/less height variation
+    local toPly = (ply:GetPos() - entPos):Angle().y
+    local rad = math_rad(toPly + math_random(-50, 50))
+    local start = traceData.start
+    start.x = entPos.x + math_cos(rad) * 64
+    start.y = entPos.y + math_sin(rad) * 64
+    start.z = z
+    local endpos = traceData.endpos
+    endpos.x, endpos.y, endpos.z = entPos.x, entPos.y, z
+    traceData.filter = ply
+    util_TraceLine(traceData) -- fills traceRes via `output`
+    local hitPos, hitNormal = traceRes.HitPos, traceRes.HitNormal
+    util_Decal("TreexMarker", hitPos + hitNormal * 2, hitPos - hitNormal * 2, game.GetWorld())
+    --util_Decal("TreexMarker", hitPos + hitNormal * 2, hitPos - hitNormal * 2, game.GetWorld())
+    if traceRes.Hit and traceRes.Entity == ent then ent.markerPos = hitPos end
+end
+
 hook.Add("EntityTakeDamage", "TakeWoodDmg", function(ent, dmginfo)
     local dmginfo_Attk = dmginfo:GetAttacker()
     if not IsValid(dmginfo_Attk) then return end
@@ -105,23 +124,8 @@ hook.Add("EntityTakeDamage", "TakeWoodDmg", function(ent, dmginfo)
     local tr = dmginfo_Attk:GetEyeTrace()
     if not tr.Entity then return end
     if MAT[ent:GetMaterialType()] == "MAT_WOOD" and TREE_MODELS[tr.Entity:GetModel()] then
-        ent:RemoveAllDecals()
         local oldMarker = ent.markerPos
-        local entPos = ent:GetPos()
-        local z = dmginfo_Attk:EyePos().z + math_random(-10, 10) -- widen/narrow this for more/less height variation
-        local toPly = (dmginfo_Attk:GetPos() - entPos):Angle().y
-        local rad = math_rad(toPly + math_random(-50, 50))
-        local start = traceData.start
-        start.x = entPos.x + math_cos(rad) * 64
-        start.y = entPos.y + math_sin(rad) * 64
-        start.z = z
-        local endpos = traceData.endpos
-        endpos.x, endpos.y, endpos.z = entPos.x, entPos.y, z
-        traceData.filter = dmginfo_Attk
-        util_TraceLine(traceData) -- fills traceRes via `output`
-        local hitPos, hitNormal = traceRes.HitPos, traceRes.HitNormal
-        util_Decal("TreexMarker", hitPos + hitNormal * 2, hitPos - hitNormal * 2, game.GetWorld())
-        if traceRes.Hit and traceRes.Entity == ent then ent.markerPos = hitPos end
+        if not oldMarker then FookerTreeMarker(ent, dmginfo, dmginfo_Attk) end
         if ent.amount == nil then ent.amount = 0 end
         if ent.amount >= #placeHolster then ent.amount = 0 end
         local mathd = GRUST_GetItemFromWep(dmginfo_Attk, "Wood")
@@ -131,9 +135,12 @@ hook.Add("EntityTakeDamage", "TakeWoodDmg", function(ent, dmginfo)
         local wepClass = dmginfo_Attk:GetActiveWeapon():GetClass()
         local mult = multiPlyer[wepClass] or 1
         local base = placeHolster[ent.amount] * mult
-        if oldMarker and dmgpos:DistToSqr(oldMarker) <= 20 * 20 then -- 12 units radius, tune this
+        if oldMarker and dmgpos:DistToSqr(oldMarker) <= 8 * 8 then
             AddItemsToGmodCount(dmginfo_Attk, item.name, 100, nil, base * 1.2)
             ent:EmitSound("farming/tree_spray.wav")
+            ent:RemoveAllDecals()
+            ent.markerPos = nil
+            FookerTreeMarker(ent, dmginfo, dmginfo_Attk)
         else
             AddItemsToGmodCount(dmginfo_Attk, item.name, 100, nil, base)
         end

@@ -32,10 +32,10 @@ ITEMS:RegisterItem("Builder", {
         return {
             {
                 CanCraft = true,
-                Time = 30,
+                Time = 5,
                 {
                     ITEM = "Wood",
-                    AMOUNT = 250,
+                    AMOUNT = 1,
                 },
             },
         }
@@ -54,10 +54,10 @@ ITEMS:RegisterItem("Hammer", {
         return {
             {
                 CanCraft = true,
-                Time = 30,
+                Time = 5,
                 {
                     ITEM = "Wood",
-                    AMOUNT = 300,
+                    AMOUNT = 1,
                 },
             },
         }

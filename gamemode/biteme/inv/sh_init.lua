@@ -60,7 +60,7 @@ RustOfficial.ITEMS = {
         func = function(ply) ply:Give("rust_builder") end,
         weapon = "rust_builder",
         Max = 1000,
-        wModel = "models/environment/misc/loot_bag.mdl",
+        wModel = "models/weapons/darky_m/rust/w_buildingplan.mdl",
         Craftable = true,
         BluePrint = false,
     },
@@ -108,8 +108,6 @@ RustOfficial.ITEMS = {
         Craftable = true,
         BluePrint = false,
     },
-    
-    
 }
 
 function RustOfficial.GetItem(key)

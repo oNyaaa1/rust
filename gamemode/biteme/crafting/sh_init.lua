@@ -16,6 +16,34 @@ if SERVER then
 		--sandbox_wood_give "Wood" 300
 	end)
 
+	local Queues = {}
+	local MAX_QUEUE = 10
+	local function StopCrafting(id, ply)
+		timer.Remove("Craft" .. id)
+		local front = Queues[id] and Queues[id][1]
+		if front and IsValid(ply) then RustNotifyRemove(ply, front.item.Name) end
+		Queues[id] = nil
+	end
+
+	local function StartCraft(ply)
+		local id = ply:SteamID64()
+		local job = Queues[id] and Queues[id][1]
+		if not job then return StopCrafting(id, ply) end
+		job.finish = CurTime() + job.time
+		timer.Create("Craft" .. id, 1, 0, function()
+			if not IsValid(ply) or not ply:Alive() then return StopCrafting(id, ply) end
+			local item = job.item
+			local left = math.Round(job.finish - CurTime())
+			RustNotify(ply, item.Name, item.Name, left, "effect", 8)
+			if left > 0 then return end
+			AddItemsToGmod(ply, "Inventory", 1, item.InfoTag, math.random(50, 60), item.Weapon, 1)
+			RustNotifyRemove(ply, item.Name)
+			table.remove(Queues[id], 1)
+			StartCraft(ply) -- starts the next job, or cleans up if the queue is empty
+		end)
+	end
+
+	hook.Add("PlayerDisconnected", "CraftQueueCleanup", function(ply) StopCrafting(ply:SteamID64(), nil) end)
 	local ConVarAdmin = CreateConVar("admin_freepass", 0, {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Free stuff for admins")
 	util.AddNetworkString("CraftingAbility")
 	net.Receive("CraftingAbility", function(len, ply)
@@ -38,19 +66,16 @@ if SERVER then
 
 		local bool, amount = CalcItem(ply, toCraft)
 		if amount < toAmount then return end
-		local gate = CurTime() + toTime
-		local timerlapse = 1
-		if timer.Exists("Craft" .. ply:SteamID64() .. item.Name) then timerlapse = timerlapse + 1 end
+		local id = ply:SteamID64()
+		Queues[id] = Queues[id] or {}
+		if #Queues[id] >= MAX_QUEUE then return end
 		GInv_RemoveItem(ply, toCraft, toAmount)
-		timer.Create("Craft" .. ply:SteamID64() .. item.Name .. timerlapse, 1, 0, function()
-			local realtime = math.Round(gate - CurTime())
-			RustNotify(ply, item.Name, item.Name, realtime, "effect", 8)
-			if realtime <= 0 then
-				AddItemsToGmod(ply, "Inventory", 1, item.InfoTag, math.random(50, 60), item.Weapon, 1)
-				RustNotifyRemove(ply, item.Name)
-				timer.Remove("Craft" .. ply:SteamID64() .. item.Name .. timerlapse)
-			end
-		end)
+		table.insert(Queues[id], {
+			item = item,
+			time = toTime
+		})
+
+		if #Queues[id] == 1 then StartCraft(ply) end
 	end)
 end
 
