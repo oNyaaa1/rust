@@ -294,6 +294,11 @@ function DeleteItem(ply, itemID)
         return true
     end
 
+    if it.id == "Furnace" and wep:GetClass() == "rust_hands" then
+        s[sel[1]] = nil
+        return true
+    end
+
     if (it.Count or 1) > 1 then
         it.Count = it.Count - 1
     else

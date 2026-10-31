@@ -1,22 +1,23 @@
-ITEMS:RegisterItem("rust_deploy_furnace", {
+ITEMS:RegisterItem("Furnace", {
     Name = "Furnace",
     Info = "Furnace!",
     Category = "Items",
+    InfoTag = "Furnace",
     model = "materials/items/deployable/furnace.png",
-    Weapon = "rust_deploy_furnace",
+    Weapon = nil,
     Count = 1,
     Craft = function()
         return {
             {
                 CanCraft = true,
-                Time = 30,
+                Time = 1,
                 {
                     ITEM = "Stone",
-                    AMOUNT = 250,
+                    AMOUNT = 0,
                 },
                 {
                     ITEM = "Low Grade Fuel",
-                    AMOUNT = 150,
+                    AMOUNT = 0,
                 },
             },
         }
