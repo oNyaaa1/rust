@@ -65,7 +65,7 @@ local function FindOutputSlot(out, name)
 end
 
 local CHARCOAL = "Charcoal" -- your charcoal item id
-local CHARCOAL_PER_FUEL = 1 -- charcoal made per wood burned
+local CHARCOAL_PER_FUEL = 2 -- charcoal made per wood burned
 function ENT:Think()
     self:NextThink(CurTime() + TICK)
     if not self:GetOn() then return true end
@@ -103,7 +103,7 @@ function ENT:Think()
 
     -- keep the open furnace screen up to date
     local v = self.viewer
-    if IsValid(v) and v:GetPos():DistToSqr(self:GetPos()) < 250 * 250 then self:SendFurnaceUI(v) end
+    if IsValid(v) and v:GetPos():DistToSqr(self:GetPos()) < 250 * 250 then self:SendFurnaceUI(v, false) end
     return true
 end
 
@@ -133,7 +133,7 @@ local function Pack(slots)
     return out
 end
 
-function ENT:SendFurnaceUI(ply)
+function ENT:SendFurnaceUI(ply, opened)
     net.Start("gRustFurnace")
     net.WriteEntity(self)
     net.WriteTable({
@@ -141,6 +141,7 @@ function ENT:SendFurnaceUI(ply)
         fuel = Pack(self.Slots.fuel)[1],
         input = Pack(self.Slots.input),
         output = Pack(self.Slots.output),
+        open = opened,
     })
 
     net.Send(ply)
@@ -186,13 +187,13 @@ net.Receive("gRustFurnaceToggle", function(_, ply)
     if not IsValid(ent) or not ent.Slots then return end
     if ply:GetPos():DistToSqr(ent:GetPos()) > 250 * 250 then return end
     ent:ToggleFurnace()
-    ent:SendFurnaceUI(ply)
+    ent:SendFurnaceUI(ply, true)
 end)
 
 function ENT:Use(activator)
     if not IsValid(activator) or not activator:IsPlayer() then return end
     self.viewer = activator
-    self:SendFurnaceUI(activator)
+    self:SendFurnaceUI(activator, true)
 end
 
 function ENT:StartTouch(ent)

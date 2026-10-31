@@ -1,5 +1,4 @@
 include("shared.lua")
-
 function ENT:Draw()
     self:DrawModel()
 end
@@ -8,9 +7,23 @@ local function S(n)
     return math.Round(n * ScrH() / 1080)
 end
 
-surface.CreateFont("gRustFurn_Title", {font = "Roboto Condensed", size = S(44), weight = 800})
-surface.CreateFont("gRustFurn_Label", {font = "Roboto Condensed", size = S(20), weight = 800})
-surface.CreateFont("gRustFurn_Amount", {font = "Roboto Condensed", size = S(20), weight = 700})
+surface.CreateFont("gRustFurn_Title", {
+    font = "Roboto Condensed",
+    size = S(44),
+    weight = 800
+})
+
+surface.CreateFont("gRustFurn_Label", {
+    font = "Roboto Condensed",
+    size = S(20),
+    weight = 800
+})
+
+surface.CreateFont("gRustFurn_Amount", {
+    font = "Roboto Condensed",
+    size = S(20),
+    weight = 700
+})
 
 local COL_TEXT = Color(240, 232, 224)
 local COL_LABEL = Color(200, 195, 190, 200)
@@ -22,7 +35,6 @@ local COL_RED = Color(177, 68, 52)
 local COL_GREEN = Color(112, 140, 52)
 local COL_HOVER = Color(255, 255, 255, 20)
 local FLAME = Material("icon16/fire.png")
-
 local iconCache = {}
 local function GetIcon(path)
     if not path then return end
@@ -60,9 +72,18 @@ local function DrawArrow(cx, y1, y2)
     surface.DrawRect(cx - 1, y1, 2, y2 - y1 - hh)
     draw.NoTexture()
     surface.DrawPoly({
-        {x = cx - hw, y = y2 - hh},
-        {x = cx + hw, y = y2 - hh},
-        {x = cx, y = y2},
+        {
+            x = cx - hw,
+            y = y2 - hh
+        },
+        {
+            x = cx + hw,
+            y = y2 - hh
+        },
+        {
+            x = cx,
+            y = y2
+        },
     })
 end
 
@@ -78,14 +99,11 @@ end
 
 local function OpenFurnace(ent, data)
     if IsValid(GRUST_FurnaceUI) then GRUST_FurnaceUI:Remove() end
-
     local PW, PH, SLOT, GAP = S(570), S(504), S(86), S(7)
     local TITLE_H, CTRL_H, BTN_W = S(55), S(48), S(135)
     local W, H = PW, TITLE_H + PH + S(9) + CTRL_H
-
     hook.Run("ScoreboardShow") -- opens your inventory (it returns true, so the default scoreboard doesn't show)
     if not IsValid(GRUST_TEST) then return end
-
     local pnl = vgui.Create("DPanel", GRUST_TEST) -- child of the inventory background so drags work between them
     GRUST_FurnaceUI = pnl
     pnl.ent, pnl.data = ent, data
@@ -93,24 +111,20 @@ local function OpenFurnace(ent, data)
     local invBox = IsValid(GRUST_SLOTS) and GRUST_SLOTS:GetParent()
     local px = invBox and (invBox:GetX() + invBox:GetWide() + S(30)) or (ScrW() - W) / 2
     pnl:SetPos(math.min(px, ScrW() - W - S(10)), (ScrH() - H) / 2)
-
     pnl.Paint = function(self, w, h)
         local d = self.data or {}
         local y0, cx = TITLE_H, w / 2
         draw.SimpleText("FURNACE", "gRustFurn_Title", 0, 0, COL_TEXT)
         draw.RoundedBox(0, 0, y0, w, PH, COL_PANEL)
-
         -- fuel
         draw.SimpleText("FUEL", "gRustFurn_Label", S(36), y0 + S(30), COL_LABEL, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
         DrawSlot(cx - SLOT / 2, y0 + S(51), SLOT, d.fuel)
         DrawArrow(cx, y0 + S(157), y0 + S(204))
-
         -- input
         draw.SimpleText("INPUT", "gRustFurn_Label", S(36), y0 + S(198), COL_LABEL, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
         local iy = y0 + S(220)
         DrawSlot(cx - GAP / 2 - SLOT, iy, SLOT, d.input and d.input[1])
         DrawSlot(cx + GAP / 2, iy, SLOT, d.input and d.input[2])
-
         -- bracket joining the two inputs into one arrow
         local lx, rx = cx - GAP / 2 - SLOT / 2, cx + GAP / 2 + SLOT / 2
         local by1, by2 = y0 + S(324), y0 + S(344)
@@ -119,7 +133,6 @@ local function OpenFurnace(ent, data)
         surface.DrawRect(rx - 1, by1, 2, by2 - by1)
         surface.DrawRect(lx - 1, by2 - 1, rx - lx + 2, 2)
         DrawArrow(cx, by2, y0 + S(372))
-
         -- output
         draw.SimpleText("OUTPUT", "gRustFurn_Label", S(36), y0 + S(366), COL_LABEL, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
         local ox = cx - (SLOT * 3 + GAP * 2) / 2
@@ -160,7 +173,6 @@ local function OpenFurnace(ent, data)
         sp:SetSize(SLOT, SLOT)
         sp.furnEnt, sp.kind, sp.idx = ent, kind, idx
         sp:Droppable("grust_item") -- same name as your inventory items
-
         local function slotData()
             local d = pnl.data or {}
             if kind == "fuel" then return d.fuel end
@@ -180,7 +192,6 @@ local function OpenFurnace(ent, data)
         end
 
         sp.DoRightClick, sp.DoDoubleClick = take, take -- right-click / double-click sends it back to the inventory
-
         if kind ~= "output" then
             sp:Receiver("grust_item", function(self, panels, dropped)
                 if not dropped then return end
@@ -210,12 +221,11 @@ net.Receive("gRustFurnace", function()
     local ent = net.ReadEntity()
     local data = net.ReadTable()
     if not IsValid(ent) then return end
-
     -- already open on this furnace: just refresh the contents
     if IsValid(GRUST_FurnaceUI) and GRUST_FurnaceUI.ent == ent then
         GRUST_FurnaceUI.data = data
         return
     end
 
-    OpenFurnace(ent, data)
+    if data.open then OpenFurnace(ent, data) end
 end)
