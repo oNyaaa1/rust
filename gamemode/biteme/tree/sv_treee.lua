@@ -85,6 +85,17 @@ local TREE_MODELS = {
     ["models/props_foliage/ah_ash_tree_lg.mdl"] = 190
 }
 
+-- put these at the top of the file (outside the function)
+local math_rad, math_cos, math_sin, math_random = math.rad, math.cos, math.sin, math.random
+local util_TraceLine, util_Decal = util.TraceLine, util.Decal
+local traceData = {
+    start = Vector(),
+    endpos = Vector(),
+    filter = nil,
+    output = {}
+}
+
+local traceRes = traceData.output
 local placeHolster = {5, 10, 20, 40, 80, 128}
 hook.Add("EntityTakeDamage", "TakeWoodDmg", function(ent, dmginfo)
     local dmginfo_Attk = dmginfo:GetAttacker()
@@ -94,12 +105,39 @@ hook.Add("EntityTakeDamage", "TakeWoodDmg", function(ent, dmginfo)
     local tr = dmginfo_Attk:GetEyeTrace()
     if not tr.Entity then return end
     if MAT[ent:GetMaterialType()] == "MAT_WOOD" and TREE_MODELS[tr.Entity:GetModel()] then
+        ent:RemoveAllDecals()
+        local oldMarker = ent.markerPos
+        local entPos = ent:GetPos()
+        local z = dmginfo_Attk:EyePos().z + math_random(-10, 10) -- widen/narrow this for more/less height variation
+        local toPly = (dmginfo_Attk:GetPos() - entPos):Angle().y
+        local rad = math_rad(toPly + math_random(-50, 50))
+        local start = traceData.start
+        start.x = entPos.x + math_cos(rad) * 64
+        start.y = entPos.y + math_sin(rad) * 64
+        start.z = z
+        local endpos = traceData.endpos
+        endpos.x, endpos.y, endpos.z = entPos.x, entPos.y, z
+        traceData.filter = dmginfo_Attk
+        util_TraceLine(traceData) -- fills traceRes via `output`
+        local hitPos, hitNormal = traceRes.HitPos, traceRes.HitNormal
+        util_Decal("TreexMarker", hitPos + hitNormal * 2, hitPos - hitNormal * 2, game.GetWorld())
+        if traceRes.Hit and traceRes.Entity == ent then ent.markerPos = hitPos end
         if ent.amount == nil then ent.amount = 0 end
         if ent.amount >= #placeHolster then ent.amount = 0 end
         local mathd = GRUST_GetItemFromWep(dmginfo_Attk, "Wood")
         ent.amount = ent.amount + 1
         if mathd >= item.Max then ent.amount = 1 end
-        AddItemsToGmodCount(dmginfo_Attk, item.name, 100, nil, placeHolster[ent.amount] * multiPlyer[dmginfo_Attk:GetActiveWeapon():GetClass()])
+        local dmgpos = dmginfo:GetDamagePosition()
+        local wepClass = dmginfo_Attk:GetActiveWeapon():GetClass()
+        local mult = multiPlyer[wepClass] or 1
+        local base = placeHolster[ent.amount] * mult
+        if oldMarker and dmgpos:DistToSqr(oldMarker) <= 20 * 20 then -- 12 units radius, tune this
+            AddItemsToGmodCount(dmginfo_Attk, item.name, 100, nil, base * 1.2)
+            ent:EmitSound("farming/tree_spray.wav")
+        else
+            AddItemsToGmodCount(dmginfo_Attk, item.name, 100, nil, base)
+        end
+
         local maxHP = TREE_MODELS[ent:GetModel()]
         if not ent.treeHealth then ent.treeHealth, ent.treeHits = maxHP, 0 end
         if ent.treeHealth == nil then return end

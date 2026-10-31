@@ -8,8 +8,10 @@ local MAX_WORLD_BAGS = 500
 local RESPAWN_EVERY = 30 -- seconds
 local worldBags = {}
 local function FindRandomSpot()
-    local mins, maxs = game.GetWorld():GetModelBounds()
-    for _ = 1, 50 do
+    local game = game.GetWorld()
+    if game == NULL then return end
+    local mins, maxs = game:GetModelBounds()
+    for _ = 1, 150 do
         local p = Vector(math.Rand(mins.x, maxs.x), math.Rand(mins.y, maxs.y), math.Rand(mins.z, maxs.z))
         if not util.IsInWorld(p) then continue end
         local tr = util.TraceLine({
@@ -18,7 +20,7 @@ local function FindRandomSpot()
             mask = MASK_SOLID_BRUSHONLY
         })
 
-        if tr.Hit and not tr.StartSolid and not tr.HitSky and tr.HitNormal.z > 0.7 and bit.band(util.PointContents(tr.HitPos + Vector(0, 0, 10)), CONTENTS_WATER) == 0 then return tr.HitPos + Vector(0, 0, 10) end
+        if tr.Hit and not tr.StartSolid and not tr.HitSky and tr.HitNormal.z > 0.7 and bit.band(util.PointContents(tr.HitPos + Vector(0, 0, 10)), CONTENTS_WATER) == 0 then return tr.HitPos + Vector(0, 0, -5) end
     end
 end
 
@@ -39,6 +41,7 @@ local function SpawnWorldBag()
     ent:SetPos(pos)
     ent:Spawn()
     ent:Activate()
+    ent:DropToFloor()
     worldBags[#worldBags + 1] = ent
 end
 

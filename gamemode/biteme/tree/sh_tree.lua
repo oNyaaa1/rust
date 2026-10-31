@@ -1,0 +1,1 @@
+game.AddDecal("TreexMarker", "decals/decal_xspray_a_red") -- Adds decal to game with name TreexMarker

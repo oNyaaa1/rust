@@ -169,7 +169,6 @@ function CalcItem(ply, item)
     local cont, slot = FindExistingItem(ply, item)
     local it = GetItem(ply, cont, slot)
     if not it then return false, 0 end
-    PrintTable(it)
     local have = it.Count or 1
     return true, have
 end
@@ -268,7 +267,6 @@ local function findInvSlot(ply, item)
         for k, v in pairs(SIZE) do
             for i = 1, #inv[new] do
                 if istable(inv[i][k]) then
-                    PrintTable(inv[i][k])
                     works = inv[i][k]
                     slot = i
                     cont = k

@@ -55,8 +55,7 @@ function ENT:NewWeakspot()
     end
 
     -- fallback if no trace hit: top of the rock
-    --self:SetNW2Vector("Weakspot", self:LocalToWorld(Vector(0, 0, maxs.z)))
-    self:SetNW2Vector("Weakspot", Vector(0, 0, maxs.z))
+    self:SetNW2Vector("Weakspot", self:LocalToWorld(Vector(0, 0, maxs.z)))
 end
 
 local placeHolster = {30, 60, 90, 120}
@@ -65,14 +64,6 @@ function ENT:OnTakeDamage(dmg)
     local attacker = dmg:GetAttacker()
     if not (IsValid(attacker) and attacker:IsPlayer()) then return end
     local ws = self:GetNW2Vector("Weakspot")
-    if ws ~= vector_origin and attacker:GetEyeTrace().HitPos:DistToSqr(ws) < 25 * 25 then
-        self.SetHealthz = (self.SetHealthz or 300) - 30 -- bonus on top of the normal 30
-        self:NewWeakspot()
-        attacker:EmitSound("farming/flare_hit.wav")
-    else
-        attacker:EmitSound("tools/rock_strike_1.mp3")
-    end
-
     if self.SetHealthz == nil then self.SetHealthz = 300 end
     self.SetHealthz = self.SetHealthz - 30
     local ent = self
@@ -142,6 +133,14 @@ function ENT:OnTakeDamage(dmg)
         local phys = self:GetPhysicsObject()
         self.firsthit = false
         if IsValid(phys) then phys:Wake() end
+    end
+
+    if ws ~= vector_origin and attacker:GetEyeTrace().HitPos:DistToSqr(ws) < 25 * 25 then
+        self.SetHealthz = (self.SetHealthz or 300) - 30 -- bonus on top of the normal 30
+        self:NewWeakspot()
+        attacker:EmitSound("farming/flare_hit.wav")
+    else
+        attacker:EmitSound("tools/rock_strike_1.mp3")
     end
 
     if self.SetHealthz <= 0 then
