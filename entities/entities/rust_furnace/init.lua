@@ -47,8 +47,8 @@ function ENT:ToggleFurnace(state)
 end
 
 local SMELT = {
-    ["Metal Ore"] = "Metal Fragments",
-    ["Sulfur Ore"] = "Sulfur",
+    ["Metal"] = "MetalOre",
+    ["Sulfur"] = "SulfurOre",
 }
 
 local INPUT_ITEMS = SMELT
