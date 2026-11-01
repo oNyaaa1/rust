@@ -255,11 +255,12 @@ end
 
 DEPLOY.SkipUpper = {
     sent_foundation = true,
-    sent_wall = true,
+    sent_wall = false,
     sent_door = true,
     sent_doorway = true,
     sent_doorwayl = true,
     sent_garagedoor = true,
+    sent_hwall = false,
 }
 
 DEPLOY.SkipUpper = DEPLOY.SkipUpper or {}
