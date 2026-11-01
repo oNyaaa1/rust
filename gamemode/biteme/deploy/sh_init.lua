@@ -270,7 +270,7 @@ DEPLOY.FoundationHeight = 32 -- your foundation's height
 DEPLOY.FoundationRaise = 128 / 2 -- height of one level
 local IDS = {
     ["rust_furnace"] = "rust_furnace",
-    ["sent_garagedoor"] = "Garagsent_garagedooreDoor",
+    ["sent_garagedoor"] = "sent_garagedoor",
     ["rust_tc"] = "rust_tc",
 }
 
