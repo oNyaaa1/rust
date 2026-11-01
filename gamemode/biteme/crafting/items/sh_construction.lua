@@ -1,6 +1,7 @@
-ITEMS:RegisterItem("rust_deploy_tc", {
+ITEMS:RegisterItem("ToolCupboard", {
     Name = "Tool Cupboard",
     Info = "For upkeep of the base!",
+    InfoTag = "ToolCupboard",
     Category = "Construction",
     model = "materials/items/deployable/tool_cupboard.png",
     Weapon = "rust_deploy_tc",
@@ -14,7 +15,7 @@ ITEMS:RegisterItem("rust_deploy_tc", {
                 Time = 0,
                 CanCraft = false,
                 {
-                    ITEM = "Cloth",
+                    ITEM = "Wood",
                     AMOUNT = 0,
                 },
             },

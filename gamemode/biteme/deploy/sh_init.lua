@@ -7,6 +7,7 @@ DEPLOY.FItem = function(ply, item, pos, ang)
     ent:SetAngles(ang)
     ent:Spawn()
     ent:Activate()
+    ent:DropToFloor()
     return ent
 end
 
@@ -253,6 +254,12 @@ DEPLOY.SkipUpper = {
     sent_garagedoor = true,
 }
 
+local IDS = {
+    ["rust_furnace"] = "rust_furnace",
+    ["sent_garagedoor"] = "Garagsent_garagedooreDoor",
+    ["rust_tc"] = "rust_tc",
+}
+
 function DEPLOY:GetSocket(ply, class)
     if not IsValid(ply) then return end
     class = string.lower(class or "")
@@ -260,6 +267,19 @@ function DEPLOY:GetSocket(ply, class)
     local entTRR = tr.Entity ~= nil and tr.Entity:GetClass() ~= "worldspawn" and tr.Entity
     local base = entTRR or DEPLOY:GetGround(ply, class)
     local ent = tr.Entity
+    local ids = IDS[class]
+    if ids and IsValid(ent) and ent:GetClass() == "sent_foundation" then
+        local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
+        local m = 24 -- half the item's width: how far it must stay from the edge
+        local lp = ent:WorldToLocal(tr.HitPos)
+        lp.x = math.Clamp(lp.x, mins.x + m, maxs.x - m)
+        lp.y = math.Clamp(lp.y, mins.y + m, maxs.y - m)
+        lp.z = maxs.z + 0
+        local pos = ent:LocalToWorld(lp)
+        local yaw = (ply:GetPos() - pos):Angle().y
+        return pos, Angle(0, yaw, 0), "sent_foundation", ent
+    end
+
     if IsValid(ent) and not ent:IsWorld() and not self.SkipUpper[class] then
         local top = ent:LocalToWorld(Vector(0, 0, ent:OBBMaxs().z))
         top.z = top.z + (self.ClassZ[class] or self.DefaultZ)

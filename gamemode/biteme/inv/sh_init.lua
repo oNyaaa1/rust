@@ -7,13 +7,14 @@ if SERVER then
     local IDS = {
         ["rust_furnace"] = "Furnace",
         ["sent_garagedoor"] = "GarageDoor",
+        ["rust_tc"] = "ToolCupboard",
     }
 
     net.Receive("GarageDoorPlaceL", function(len, ply)
         local bang = net.ReadString()
         local pos, ang, name = DEPLOY:GetSocket(ply, bang)
         if name ~= "doorwayl" and IDS[bang] == "GarageDoor" then return end
-        print(IDS[bang], bang)
+        if name ~= "sent_foundation" and IDS[bang] == "ToolCupboard" then return end
         DEPLOY.FItem(ply, bang, pos, ang)
         DeleteItem(ply, IDS[bang])
         SendInv(ply)
@@ -169,6 +170,25 @@ RustOfficial.ITEMS = {
         Craftable = true,
         BluePrint = false,
     },
+    ToolCupboard = {
+        name = "Tool Cupboard",
+        color = Color(200, 60, 60),
+        image = "materials/items/deployable/tool_cupboard.png",
+        func = function(ply)
+            if SERVER then
+                ply.SelectedGarageDoor = nil
+                net.Start("SendClientinfoGDL")
+                net.WriteBool(true)
+                net.WriteString("rust_tc")
+                net.Send(ply)
+            end
+        end,
+        weapon = nil,
+        Max = 2000,
+        wModel = "models/environment/misc/loot_bag.mdl",
+        Craftable = true,
+        BluePrint = false,
+    },
 }
 
 function RustOfficial.GetItem(key)
@@ -186,7 +206,6 @@ if CLIENT then
         local bool = net.ReadBool()
         classes = net.ReadString()
         if IsValid(RustOfficial.GhostGD.Ghost) then RustOfficial.GhostGD.Ghost:Remove() end
-        print(classes, bool)
         local function GetModelFor(class)
             local ent = scripted_ents.Get(class or "")
             if not ent then return end
@@ -196,11 +215,9 @@ if CLIENT then
         end
 
         local model = GetModelFor(classes)
-        print(model)
         util.PrecacheModel(model)
-        RustOfficial.GhostGD.Ghost = ClientsideModel(model, RENDERGROUP_TRANSLUCENT)
+        RustOfficial.GhostGD.Ghost = ClientsideModel(model)
         RustOfficial.GhostGD.GhostModel = model
-        RustOfficial.GhostGD.Ghost:SetRenderMode(RENDERMODE_TRANSALPHA)
         RustOfficial.GhostGD.Ghost:SetColor(Color(255, 255, 255, 120))
         ply.SelectedGarageDoor = true
     end)
@@ -208,7 +225,6 @@ if CLIENT then
     hook.Add("Think", "GarageDoor", function()
         local ply = LocalPlayer()
         if not RustOfficial.GhostGD then RustOfficial.GhostGD = {} end
-        if ply.SelectedGarageDoor == nil then ply.SelectedGarageDoor = false end
         if not ply.CoolDownCDL then ply.CoolDownCD = 0 end
         if ply.SelectedGarageDoor and IsValid(RustOfficial.GhostGD.Ghost) then
             local pos, ang = DEPLOY:GetSocket(ply, classes)
