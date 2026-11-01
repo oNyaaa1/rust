@@ -56,14 +56,14 @@ RustOfficial.ITEMS = {
         BluePrint = false,
     },
     MetalOre = {
-        name = "Metal",
+        name = "Metal Fragments",
         color = Color(200, 60, 60),
         image = "materials/items/resources/metal_fragments.png",
         func = function(ply) end,
         weapon = nil,
         Max = 1,
         wModel = "models/environment/misc/loot_bag.mdl",
-        Craftable = true,
+        Craftable = false,
         BluePrint = false,
     },
     Hammer = {
@@ -141,7 +141,7 @@ RustOfficial.ITEMS = {
         BluePrint = false,
     },
     Metal = {
-        name = "Metal",
+        name = "Metal Ore",
         color = Color(200, 60, 60),
         image = "materials/items/resources/metal_ore.png",
         func = function(ply) end,

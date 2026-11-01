@@ -1,7 +1,8 @@
-ITEMS:RegisterItem("Sulfur Ore", {
+ITEMS:RegisterItem("Sulfur", {
     Name = "Sulfur Ore",
     Info = "For smelting and crafting stuff",
-    Category = "Admin",
+    Category = "ADMIN",
+    InfoTag = "Sulfur",
     model = "materials/items/resources/sulfur_ore.png",
     Weapon = "",
     Count = 50,
@@ -20,12 +21,13 @@ ITEMS:RegisterItem("Sulfur Ore", {
             },
         }
     end,
-}, "Admin")
+}, "ADMIN")
 
-ITEMS:RegisterItem("Metal Ore", {
+ITEMS:RegisterItem("Metal", {
     Name = "Metal Ore",
     Info = "For smelting and crafting stuff",
-    Category = "Admin",
+    Category = "ADMIN",
+    InfoTag = "Metal",
     model = "materials/items/resources/metal_ore.png",
     Weapon = "",
     Count = 50,
@@ -44,12 +46,13 @@ ITEMS:RegisterItem("Metal Ore", {
             },
         }
     end,
-}, "Admin")
+}, "ADMIN")
 
 ITEMS:RegisterItem("Stone", {
     Name = "Stone",
     Info = "Used for upgrading your base!",
-    Category = "Admin",
+    InfoTag = "Stone",
+    Category = "ADMIN",
     model = "materials/items/resources/stone.png",
     Weapon = "",
     Count = 50,
@@ -68,4 +71,4 @@ ITEMS:RegisterItem("Stone", {
             },
         }
     end,
-}, "Admin")
+}, "ADMIN")

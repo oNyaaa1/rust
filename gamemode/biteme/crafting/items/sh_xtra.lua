@@ -1,12 +1,13 @@
 ITEMS:RegisterItem("Cloth", {
     Name = "Cloth",
     Info = "For bandages etc",
-    Category = "Admin",
+    Category = "ADMIN",
+    InfoTag = "Cloth",
     model = "materials/items/resources/cloth.png",
     Weapon = "",
     Count = 50,
     Stackable = true,
-    StackSize = 150,
+    StackSize = 500,
     IzAdmin = true,
     Craft = function()
         return {
@@ -20,17 +21,18 @@ ITEMS:RegisterItem("Cloth", {
             },
         }
     end,
-}, "Admin")
+}, "ADMIN")
 
-ITEMS:RegisterItem("Animal Fat", {
+ITEMS:RegisterItem("AnimalFat", {
     Name = "Animal Fat",
     Info = "For bandages etc",
-    Category = "Admin",
+    InfoTag = "AnimalFat",
+    Category = "ADMIN",
     model = "materials/items/resources/animal_fat.png",
     Weapon = "",
     Count = 50,
     Stackable = true,
-    StackSize = 150,
+    StackSize = 200,
     IzAdmin = true,
     Craft = function()
         return {
@@ -44,17 +46,18 @@ ITEMS:RegisterItem("Animal Fat", {
             },
         }
     end,
-}, "Admin")
+}, "ADMIN")
 
 ITEMS:RegisterItem("Wood", {
     Name = "Wood",
     Info = "For upgrading your base!",
-    Category = "Admin",
+    InfoTag = "Wood",
+    Category = "ADMIN",
     model = "materials/items/resources/wood.png",
     Weapon = "",
     Count = 50,
     Stackable = true,
-    StackSize = 1000,
+    StackSize = 2000,
     IzAdmin = true,
     Craft = function()
         return {
@@ -68,17 +71,18 @@ ITEMS:RegisterItem("Wood", {
             },
         }
     end,
-}, "Admin")
+}, "ADMIN")
 
-ITEMS:RegisterItem("Metal Fragments", {
+ITEMS:RegisterItem("MetalOre", {
     Name = "Metal Fragments",
     Info = "For Pickaxes etc",
-    Category = "Admin",
+    InfoTag = "MetalOre",
+    Category = "ADMIN",
     model = "materials/items/resources/metal_fragments.png",
     Weapon = "",
     Count = 50,
     Stackable = true,
-    StackSize = 1000,
+    StackSize = 2000,
     IzAdmin = true,
     Craft = function()
         return {
@@ -86,10 +90,10 @@ ITEMS:RegisterItem("Metal Fragments", {
                 Time = 0,
                 CanCraft = false,
                 {
-                    ITEM = "Metal Fragments",
+                    ITEM = "MetalOre",
                     AMOUNT = 0,
                 },
             },
         }
     end,
-}, "Admin")
+}, "ADMIN")

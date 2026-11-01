@@ -3,19 +3,6 @@ ITEMS.ITEM = {}
 COUNT = COUNT or {}
 if SERVER then
 	util.AddNetworkString("TimerToPlux")
-	concommand.Add("sandbox_give", function(ply, cmd, args)
-		if not ply:IsAdmin() then return end
-		local me = ply:ExistingInventoryItem({
-			Weapon = tostring(args[1])
-		}, tonumber(args[2]))
-
-		if me then return end
-		ply:AddInventoryItem({
-			Weapon = tostring(args[1]),
-		}, true, tonumber(args[2]))
-		--sandbox_wood_give "Wood" 300
-	end)
-
 	local Queues = {}
 	local MAX_QUEUE = 10
 	local function StopCrafting(id, ply)
@@ -53,7 +40,8 @@ if SERVER then
 		local toTime = 30
 		local item = ITEMS:GetItem(tbl[1].Info)
 		if ConVarAdmin:GetInt() == 1 and ply:IsAdmin() then
-			AddItemsToGmod(ply, "Inventory", 1, item.InfoTag, math.random(50, 60), item.Weapon, 1)
+			PrintTable(item)
+			AddItemsToGmod(ply, "Inventory", 1, item["InfoTag"], math.random(50, 60), item["Weapon"], item["StackSize"])
 			return
 		end
 

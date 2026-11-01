@@ -44,15 +44,8 @@ if SERVER then
 
 	function ENT:Use(btn, ply)
 		local item = RustOfficial.GetItem(self.Item)
-		--AddItemsToGmodeS(ply, item.name, math.random(50, 60), item.weapon, self.Sizez)
-		local added, left = AddItemsToGmodeS(ply, item.name, math.random(50, 60), item.weapon, self.Sizez)
-		if not added then
-			ply:ChatPrint("Inventory full")
-		elseif left > 0 then
-			self:SetSizeItem(left)
-		else
-			self:Remove()
-		end
+		AddItemsToGmodCount(ply, self.Item, math.random(50, 60), item.weapon, self.Sizez)
+		self:Remove()
 	end
 
 	function ENT:StartTouch(entity)
