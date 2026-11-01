@@ -31,6 +31,10 @@ RadialMenu.Items = {
         name = "Garage Frame",
         class = "sent_doorwayl"
     },
+    {
+        name = "Half Wall",
+        class = "sent_hwall"
+    },
 }
 
 RadialMenu.InnerRadius = 70

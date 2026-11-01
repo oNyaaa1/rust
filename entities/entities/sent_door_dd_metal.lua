@@ -1,0 +1,117 @@
+AddCSLuaFile()
+ENT.Type = "anim"
+ENT.Base = "base_anim"
+ENT.PrintName = "Door"
+ENT.Category = ""
+ENT.Spawnable = true
+ENT.AdminOnly = false
+if SERVER then
+	function ENT:Initialize()
+		self:SetModel("models/deployable/metal_double_door.mdl")
+		self:PhysicsInit(SOLID_VPHYSICS)
+		self:SetMoveType(MOVETYPE_NONE)
+		self:SetSolid(SOLID_VPHYSICS)
+		local phys = self:GetPhysicsObject()
+		if phys:IsValid() then phys:Wake() end
+		self.LftDoor = ents.Create("door_metal_left")
+		self.LftDoor:Spawn()
+		self.LftDoor:Activate()
+		self.LftDoor:SetPos(self:LocalToWorld(Vector(-50.3, 0, 5)))
+		self.LftDoor:SetAngles(self:GetAngles() + Angle(0, 0, 0))
+		self.LftDoor:SetParent(self)
+		self.RghtDoor = ents.Create("door_metal_right")
+		self.RghtDoor:Spawn()
+		self.RghtDoor:Activate()
+		self.RghtDoor:SetPos(self:LocalToWorld(Vector(50, 0, 5)))
+		self.RghtDoor:SetAngles(self:GetAngles() + Angle(0, -180, 0))
+		self.RghtDoor:SetParent(self)
+		--constraint.Weld(self, Entity(0), 0, 0, 0, true, true)
+		self.Ent_Health = 2500
+		self.Ent_HealthMax = 100
+		--self:SetMaterial("Model/effects/vol_light001")
+		self:DrawShadow()
+		self.SpawnTime = 0
+		self.EntCount = 0
+		self.DoorOpen = false
+		self:SetNWInt("health_" .. self:GetClass(), self.Ent_Health)
+	end
+
+	--[[ function ENT:SpawnFunction( ply, tr )
+	if ( !tr.Hit ) then return end
+	local ent = ents.Create( "zombie_tree1" )
+	ent:SetPos( tr.HitPos + tr.HitNormal * 32 ) `
+	ent:Spawn()
+	ent:Activate()
+
+	return ent
+end ]]
+	function ENT:Think()
+		--self.LftDoor:SetPos(self:GetPos() + Vector(0,-50,5))
+		local doors = 0
+		local mydd = ents.FindInSphere(self:GetPos(), 1)
+		for k, v in pairs(mydd) do
+			local FindStr = string.find(v:GetModel() or "", "wall_frame")
+			if FindStr then doors = 1 end
+		end
+
+		local mydd2 = ents.FindInSphere(self:GetPos(), 1)
+		for k, v in pairs(mydd2) do
+			local FindStr2 = string.find(v:GetModel() or "", "gframe")
+			if FindStr2 then doors = 1 end
+		end
+
+		if doors <= 0 then
+			if IsValid(self) then self:Remove() end
+			if IsValid(self.doorLock) then self.doorLock:Remove() end
+		end
+
+		self:NextThink(CurTime() + 1)
+		return true
+	end
+
+	function ENT:OnTakeDamage(dmg)
+		local ply = dmg:GetAttacker()
+		local inflictor = dmg:GetInflictor()
+		--if type(inflictor) == "Entity" then return end
+		--if self.PropOwned != ply then return end
+		self.Ent_Health = self.Ent_Health - dmg:GetDamage()
+		if self.Ent_Health <= 0 then self:Remove() end
+		self:SetNWInt("health_" .. self:GetClass(), self.Ent_Health)
+	end
+
+	function ENT:Use(btn, ply)
+		if self.Lock == ply then return end
+		if ply.Meh == nil then ply.Meh = 0 end
+		if ply.Meh >= CurTime() then return end
+		ply.Meh = CurTime() + 0.2
+		--if self.PropOwned ~= ply then
+		--ply:ChatPrint("Door is locked")
+		--return
+		--end
+		if self.DoorOpen == false then
+			self.LftDoorAngle = self:GetAngles()
+			self.DoorOpen = true
+			local ang = self:GetAngles()
+			ang:RotateAroundAxis(self:GetUp(), 90)
+			self.LftDoor:SetAngles(ang)
+			self.RghtDoor:SetAngles(ang)
+		elseif self.DoorOpen == true then
+			self.DoorOpen = false
+			local ang = self:GetAngles()
+			ang:RotateAroundAxis(self:GetUp(), 0)
+			self.LftDoor:SetAngles(ang)
+			ang:RotateAroundAxis(self:GetUp(), -180)
+			self.RghtDoor:SetAngles(ang)
+		end
+	end
+end
+
+if CLIENT then
+	ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
+	function ENT:Initialize()
+	end
+
+	function ENT:Draw()
+		self:DrawModel()
+	end
+end

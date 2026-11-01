@@ -21,6 +21,7 @@ DEPLOY.AllowedOn = {
         sent_ceiling = true,
         sent_foundation = false,
         sent_doorwayl = true,
+        sent_hwall = true,
     },
     sent_ceiling = {
         sent_stairs = true,
@@ -30,12 +31,14 @@ DEPLOY.AllowedOn = {
         sent_ceiling = true,
         sent_foundation = false,
         sent_doorwayl = true,
+        sent_hwall = true,
     },
     sent_doorwayl = {
         sent_garagedoor = true,
         sent_doorwayl = false,
         sent_wall = false,
         sent_door = false,
+        sent_hwall = false,
     }
 }
 
@@ -55,6 +58,7 @@ DEPLOY.DefaultDist = 72.9
 DEPLOY.ClassRot = {
     sent_foundation = 0,
     sent_wall = 90,
+    sent_hwall = 90,
     sent_door = 90,
     sent_doorway = 90,
     sent_stairs = 90,
@@ -73,6 +77,7 @@ DEPLOY.DefaultZ = 14.04
 DEPLOY.ClassZ = {
     sent_foundation = 0,
     sent_wall = 0,
+    sent_hwall = 0,
     sent_door = 0,
     sent_doorway = 0,
     sent_stairs = 0,
@@ -108,6 +113,7 @@ DEPLOY.CeilingZ = {
     sent_ceiling = 128,
     sent_garagedoor = 0,
     sent_doorwayl = 0,
+    sent_hwall = 0,
 }
 
 -- centred over the foundation (0 = no edge offset)
@@ -122,6 +128,7 @@ DEPLOY.BaseClasses = {
     sent_foundation = true,
     sent_ceiling = true,
     sent_wall = true,
+    sent_hwall = true,
 }
 
 DEPLOY.ClassSide = {
@@ -152,6 +159,7 @@ local EDGE_CLASSES = {
     sent_wall = true,
     sent_doorway = true,
     sent_doorwayl = true,
+    sent_hwall = true,
 }
 
 function DEPLOY:EdgeOccupied(class, pos)
@@ -223,7 +231,7 @@ function DEPLOY:SetSocket(ply, class, pos, ang)
 end
 
 DEPLOY.LevelHeight = 128
-DEPLOY.FoundationRaise = 32 -- max height (looking far)
+DEPLOY.FoundationRaise = 128 -- max height (looking far)
 DEPLOY.FoundationLower = 0 -- never below the surface
 DEPLOY.PitchFar = 5 -- pitch at or below this = max height (32)
 DEPLOY.PitchNear = 27 -- pitch at or above this = 0 (your natural ground-looking pitch)
@@ -247,26 +255,64 @@ end
 
 DEPLOY.SkipUpper = {
     sent_foundation = true,
-    sent_wall = false,
+    sent_wall = true,
     sent_door = true,
     sent_doorway = true,
     sent_doorwayl = true,
     sent_garagedoor = true,
 }
 
+DEPLOY.SkipUpper = DEPLOY.SkipUpper or {}
+DEPLOY.SkipUpper["sent_foundation"] = true
+DEPLOY.FoundationHalf = 64 -- half your foundation's width
+DEPLOY.FoundationHeight = 32 -- your foundation's height
+DEPLOY.FoundationRaise = 128 / 2 -- height of one level
 local IDS = {
     ["rust_furnace"] = "rust_furnace",
     ["sent_garagedoor"] = "Garagsent_garagedooreDoor",
     ["rust_tc"] = "rust_tc",
 }
 
+function DEPLOY:HasGroundSupport(pos, ang)
+    ang = ang or angle_zero
+    local half = self.FoundationHalf or 64
+    local up, down = 48, 32
+    local lowZ, highZ = pos.z, pos.z
+    local corners = {Vector(half, half, 0), Vector(-half, half, 0), Vector(half, -half, 0), Vector(-half, -half, 0),}
+    for i = 1, #corners do
+        local wp = LocalToWorld(corners[i], angle_zero, pos, ang)
+        local tr = util.TraceLine({
+            start = wp + Vector(0, 0, up),
+            endpos = wp - Vector(0, 0, down),
+            mask = MASK_SOLID_BRUSHONLY,
+        })
+
+        if not tr.Hit then return false, pos.z, pos.z end
+        if i == 1 then
+            lowZ, highZ = tr.HitPos.z, tr.HitPos.z
+        else
+            lowZ = math.min(lowZ, tr.HitPos.z)
+            highZ = math.max(highZ, tr.HitPos.z)
+        end
+    end
+
+    local halfH = (self.FoundationHeight or 32) * 0.5
+    -- highest ground must touch the bottom (not floating) but not poke above the half-way point
+    if highZ < pos.z - (self.GroundTolerance or 8) then return false, lowZ, highZ end
+    if highZ > pos.z + halfH + 0.5 then return false, lowZ, highZ end
+    return true, lowZ, highZ
+end
+
+DEPLOY.GroundTolerance = 8
 function DEPLOY:GetSocket(ply, class)
     if not IsValid(ply) then return end
     class = string.lower(class or "")
     local tr = ply:GetEyeTrace()
-    local entTRR = tr.Entity ~= nil and tr.Entity:GetClass() ~= "worldspawn" and tr.Entity
-    local base = entTRR or DEPLOY:GetGround(ply, class)
     local ent = tr.Entity
+    local entTRR = IsValid(ent) and not ent:IsWorld() and ent:GetClass() ~= "sent_ghost" and ent
+    local base = entTRR or DEPLOY:GetGround(ply, class)
+    local pitch = ply:EyeAngles().p -- negative when looking up
+    -- free-placement raised foundation (looking up, not aiming at another base)
     local ids = IDS[class]
     if ids and IsValid(ent) and ent:GetClass() == "sent_foundation" then
         local mins, maxs = ent:OBBMins(), ent:OBBMaxs()
@@ -274,7 +320,7 @@ function DEPLOY:GetSocket(ply, class)
         local lp = ent:WorldToLocal(tr.HitPos)
         lp.x = math.Clamp(lp.x, mins.x + m, maxs.x - m)
         lp.y = math.Clamp(lp.y, mins.y + m, maxs.y - m)
-        lp.z = maxs.z + 0
+        lp.z = maxs.z
         local pos = ent:LocalToWorld(lp)
         local yaw = (ply:GetPos() - pos):Angle().y
         return pos, Angle(0, yaw, 0), "sent_foundation", ent
@@ -297,12 +343,22 @@ function DEPLOY:GetSocket(ply, class)
 
     if not IsValid(base) or not (self.BaseClasses and self.BaseClasses[base:GetClass()]) then
         if class == "sent_foundation" then
-            local offset = self:GetLevelOffset(ply, class, "worldspawn")
-            local pos = Vector(tr.HitPos.x, tr.HitPos.y, ply:GetPos().z + offset)
+            -- must be aiming at real world ground, on a fairly flat surface
+            if not tr.HitWorld or tr.HitNormal.z < 0.7 then return fallbackPos, fallbackAng, "none", tr.Entity end
+            local offset = self:GetLevelOffset(ply, class, "worldspawn") or 0
+            local pos = Vector(tr.HitPos.x, tr.HitPos.y, tr.HitPos.z + offset)
+            local ok, lowZ, highZ = self:HasGroundSupport(pos, fallbackAng)
+            if not ok then return fallbackPos, fallbackAng, "none", tr.Entity end
+            -- ground is higher than the base: sit the foundation half out of the ground
+            if highZ > pos.z then
+                local h = self.FoundationHeight or 32
+                pos.z = highZ - h * 0.5
+                if not self:HasGroundSupport(pos, fallbackAng) then return fallbackPos, fallbackAng, "none", tr.Entity end
+            end
             return pos, fallbackAng, "worldspawn"
         end
 
-        if not IsValid(ent) then return tr.HitPos, ply:GetAngles(), "none", tr.Entity end
+        if not IsValid(base) then return fallbackPos, fallbackAng, "none", tr.Entity end
     end
 
     local baseClass = base:GetClass()
@@ -329,7 +385,17 @@ function DEPLOY:GetSocket(ply, class)
         worldPos.z = base:GetPos().z + (self.ClassZ[class] or self.DefaultZ)
     end
 
-    -- worldPos.z = worldPos.z + self:GetLevelOffset(ply, baseClass)
+    -- snapped foundation: looking up puts it one level higher
+    local raised = false
+    local raise = worldPos.z + (self.FoundationRaise or 128 / 2)
+    if class == "sent_foundation" and pitch < -15 and math.Round(raise) <= 589 then
+        worldPos.z = worldPos.z + (self.FoundationRaise or 128 / 2)
+        raised = true
+    else
+        worldPos.z = worldPos.z
+        raised = true
+    end
+
     local rot = self.ClassRot[class] or 0
     local ang
     if self.ClassFaceEdge[class] == false then
@@ -338,6 +404,8 @@ function DEPLOY:GetSocket(ply, class)
         ang = Angle(0, fYaw + edge.yaw + rot, 0)
     end
 
+    -- no floating foundations (raised ones skip this on purpose)
+    if class == "sent_foundation" and not raised and not self:HasGroundSupport(worldPos, ang) then return fallbackPos, fallbackAng, "none", tr.Entity end
     if self:BlockedByDoorwayL(class, worldPos) or self:EdgeOccupied(class, worldPos) then return fallbackPos, fallbackAng, "none", tr.Entity end
     return worldPos, ang, name, tr.Entity
 end

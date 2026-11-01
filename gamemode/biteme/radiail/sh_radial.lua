@@ -112,6 +112,7 @@ RadialMenu2.Items = {
                 end
             },
             ["sent_stairs"] = {"models/building_re/wood_lst.mdl",},
+            
         },
     },
     {
