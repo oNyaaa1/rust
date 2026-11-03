@@ -69,8 +69,7 @@ if SERVER then
 			Wood = 50
 		},
 		Hammer = {
-			MetalOre = 5,
-			Wood = 5
+			Wood = 55
 		},
 	}
 

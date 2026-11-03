@@ -58,6 +58,17 @@ function ENT:NewWeakspot()
     self:SetNW2Vector("Weakspot", self:LocalToWorld(Vector(0, 0, maxs.z)))
 end
 
+function GRUST_GetItemFromWep(ply, wepID)
+    local total = 0
+    for _, c in ipairs({INV, HOT}) do
+        for i = 1, SIZE[c] do
+            local it = GetItem(ply, c, i)
+            if it and it.id == wepID and it.Count < GetMaxStack(it.id) then total = total + it.Count end
+        end
+    end
+    return total
+end
+
 local placeHolster = {30, 60, 90, 120}
 function ENT:OnTakeDamage(dmg)
     if not IsValid(self) then return end
