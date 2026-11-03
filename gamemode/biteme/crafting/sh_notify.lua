@@ -47,6 +47,14 @@ local STYLES = {
         bg = Color(78, 98, 40),
         icon = "icon16/house.png"
     },
+    safeZone = {
+        bg = Color(22, 200, 22),
+        icon = "icons/gestures/thumbs_up.png"
+    },
+    Danger = {
+        bg = Color(255, 24, 22),
+        icon = "icons/gestures/thumbs_up.png"
+    },
 }
 
 local mats = {}
@@ -62,7 +70,7 @@ end
 local function MakeFonts()
     surface.CreateFont("RustNotify", {
         font = "Roboto Condensed",
-        size = S(15),
+        size = S(20),
         weight = 800,
         extended = true
     })
@@ -116,8 +124,8 @@ end)
 hook.Add("HUDPaint", "RustNotify_Draw", function()
     if #notes == 0 then return end
     local now = CurTime()
-    local hx, hy = ScrW() - 255, ScrH() - 110 -- your HUD origin
-    local w, h, gap = 220, S(30), S(2)
+    local hx, hy = ScrW() - 275, ScrH() - 110 -- your HUD origin
+    local w, h, gap = 210, S(35), S(2)
     local x = hx
     local baseY = hy - h - S(6)
     for i = #notes, 1, -1 do
@@ -155,7 +163,7 @@ end)
 
 -- test: type rn_test in console
 concommand.Add("rn_test", function()
-    Add("bandage", "Bandage", "1", "pickup", 4, "")
+    Add("bandage", "Bandage", "1", "safeZone", 4, "")
     Add("bandage_fx", "Bandage", "", "effect", 8, "")
     Add("upkeep", "Upkeep Time", "33 hrs", "info", 0, "")
     Add("bp", "Building Privilege", "", "info", 0, "icon16/box.png")
