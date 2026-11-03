@@ -40,7 +40,6 @@ if SERVER then
 		local toTime = 30
 		local item = ITEMS:GetItem(tbl[1].Info)
 		if ConVarAdmin:GetInt() == 1 and ply:IsAdmin() then
-			PrintTable(item)
 			AddItemsToGmod(ply, "Inventory", 1, item["InfoTag"], math.random(50, 60), item["Weapon"], item["StackSize"])
 			return
 		end

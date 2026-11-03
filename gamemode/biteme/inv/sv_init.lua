@@ -344,7 +344,7 @@ function AddItemsToGmodCount(ply, name, dur, wep, amount)
     local cont, slot, existing = FindItem(ply, name)
     if not cont then return false end
     local it = GetItem(ply, cont, slot)
-    local left = 30
+    local left = amount
     if it then left = it.Count + amount end
     SetItem(ply, cont, slot, MakeItem(name, dur, wep, math.Round(left), slot))
     SendInv(ply)
@@ -382,7 +382,6 @@ local function DropItem(ply, cont, slot)
     ent:SetModel(it.wModel)
     ent:SetItemName(it.id)
     ent:SetSizeItem(it.Count)
-    print(it.Count, it.id)
     ent:Spawn()
     ent:Activate()
     ent:SetPos(ply:GetShootPos() + ply:GetAimVector() * 50)
