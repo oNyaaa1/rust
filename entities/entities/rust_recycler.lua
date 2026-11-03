@@ -12,7 +12,7 @@ if SERVER then
 	util.AddNetworkString("gRustRecycler")
 	util.AddNetworkString("Rust_recyclerInv")
 	util.AddNetworkString("DockToggle")
-	util.AddNetworkString("grust_FurnaceMove")
+	util.AddNetworkString("grust_RecyclerMove")
 	function ENT:Initialize()
 		self:SetModel("models/environment/misc/recycler.mdl")
 		self:PhysicsInit(SOLID_VPHYSICS)
@@ -35,11 +35,11 @@ if SERVER then
 		-- call your toggle function here, e.g. ent:Togglez()
 	end)
 
-	util.AddNetworkString("grust_FurnaceMove")
 	function ENT:SendContents(ply)
 		net.Start("DockMain")
 		net.WriteEntity(self)
 		net.WriteTable({
+			on = self.On or false,
 			fuel = self.FuelSlots,
 			input = self.InputSlots,
 			output = self.OutputSlots,
@@ -48,46 +48,113 @@ if SERVER then
 		net.Send(ply)
 	end
 
-	net.Receive("grust_FurnaceMove", function(len, ply)
+	local FUEL_ITEMS = {
+		LowGradeFueld = true
+	}
+
+	local SLOT_COUNT = {
+		fuel = 1,
+		input = 6,
+		output = 6
+	}
+
+	local RECIPES = {
+		GarageDoor = {
+			MetalOre = 25
+		},
+		Furnace = {
+			Stone = 100
+		},
+		ToolCupboard = {
+			Wood = 50
+		},
+		Hammer = {
+			MetalOre = 5,
+			Wood = 5
+		},
+	}
+
+	local CYCLE_TIME = 5 -- seconds per recycle step
+	local function CanFit(out, recipe)
+		local empty = 0
+		for i = 1, 6 do
+			if not out[i] then empty = empty + 1 end
+		end
+
+		for id in pairs(recipe) do
+			local has = false
+			for i = 1, 6 do
+				if out[i] and out[i].id == id then
+					has = true
+					break
+				end
+			end
+
+			if not has then empty = empty - 1 end
+		end
+		return empty >= 0
+	end
+
+	local function AddOutput(out, id, amount)
+		for i = 1, 6 do
+			if out[i] and out[i].id == id then
+				out[i].count = out[i].count + amount
+				return
+			end
+		end
+
+		for i = 1, 6 do
+			if not out[i] then
+				out[i] = {
+					id = id,
+					dur = 100,
+					count = amount
+				}
+				return
+			end
+		end
+	end
+
+	net.Receive("grust_RecyclerMove", function(_, ply)
 		local ent = net.ReadEntity()
-		local action = net.ReadString()
+		local mode = net.ReadString()
 		local kind = net.ReadString()
 		local idx = net.ReadUInt(4)
-		local fromCont = net.ReadUInt(2)
-		local fromSlot = net.ReadUInt(8)
-		if not IsValid(ent) or ent:GetPos():DistToSqr(ply:GetPos()) > 200 * 200 then return end
+		local name = net.ReadString()
+		if not IsValid(ent) or ent:GetClass() ~= "rust_recycler" or not ent.InputSlots then return end
+		if ply:GetPos():DistToSqr(ent:GetPos()) > 250 * 250 then return end
+		if not SLOT_COUNT[kind] or idx < 1 or idx > SLOT_COUNT[kind] then return end
 		local tbl = ({
 			fuel = ent.FuelSlots,
 			input = ent.InputSlots,
 			output = ent.OutputSlots
 		})[kind]
 
-		if not tbl then return end
-		if action == "put" then
-			if kind == "output" then -- outputs are take-only
+		local slot = tbl[idx]
+		if mode == "put" then
+			if kind == "output" then return end
+			if kind == "fuel" and not FUEL_ITEMS[name] then return end
+			if kind == "input" and FUEL_ITEMS[name] then -- fuel can't go in input slots
 				return
 			end
 
-			if tbl[idx] then -- slot already full
-				return
-			end
-
-			-- PLACEHOLDER: replace with your real inventory functions
-			local item = GetInventoryItem(ply, fromCont, fromSlot)
-			if not item then return end
+			if kind == "input" and not RECIPES[name] then return end
+			if not RustOfficial.GetItem(name) then return end
+			if slot and slot.id ~= name then return end
+			local has, amount = CalcItem(ply, name)
+			if not has or amount <= 0 then return end
+			GInv_RemoveItem(ply, name, amount)
 			tbl[idx] = {
-				id = item.id,
-				dur = item.dur,
-				count = item.count
+				id = name,
+				dur = 100,
+				count = (slot and slot.count or 0) + amount
 			}
-
-			RemoveInventoryItem(ply, fromCont, fromSlot)
-		elseif action == "take" then
-			local item = tbl[idx]
-			if not item then return end
-			-- PLACEHOLDER: replace with your real "give item" function
-			if not GiveInventoryItem(ply, item.id, item.count, item.dur) then return end
+		elseif mode == "take" then
+			if not slot then return end
+			if not AddItemsToGmodCount(ply, slot.id, slot.dur, nil, slot.count) then return end
 			tbl[idx] = nil
+		else
+			return
 		end
 
 		ent:SendContents(ply)
@@ -95,7 +162,7 @@ if SERVER then
 
 	function ENT:SpawnFunction(ply, tr)
 		if not tr.Hit then return end
-		local ent = ents.Create("zombie_tree1")
+		local ent = ents.Create("rust_recycler")
 		ent:SetPos(tr.HitPos + tr.HitNormal * 32)
 		ent:Spawn()
 		ent:Activate()
@@ -112,20 +179,61 @@ if SERVER then
 		table.insert(ent.data, {slotid, str})
 	end)
 
-	function ENT:Think()
+	net.Receive("DockToggle", function(_, ply)
+		local ent = net.ReadEntity()
+		if not IsValid(ent) or ent:GetClass() ~= "rust_recycler" then return end
+		if ply:GetPos():DistToSqr(ent:GetPos()) > 250 * 250 then return end
+		ent.On = not ent.On
+		if ent.On and not ent.FuelSlots[1] then ent.On = false end
+		ent.NextCycle = CurTime() + CYCLE_TIME
+		ent:SendContents(ply)
+	end)
+
+	function ENT:Refresh()
+		local v = self.viewer
+		if IsValid(v) and v:GetPos():DistToSqr(self:GetPos()) < 250 * 250 then self:SendContents(v) end
 	end
 
-	function ENT:OnTakeDamage(dmg)
+	function ENT:Think()
+		self:NextThink(CurTime() + 1)
+		if not self.On or CurTime() < (self.NextCycle or 0) then return true end
+		local fuel = self.FuelSlots[1]
+		local did = false
+		if fuel and fuel.count >= 1 then
+			for i = 1, 6 do
+				local it = self.InputSlots[i]
+				local recipe = it and RECIPES[it.id]
+				if recipe and CanFit(self.OutputSlots, recipe) then
+					it.count = it.count - 1
+					if it.count <= 0 then self.InputSlots[i] = nil end
+					for id, amt in pairs(recipe) do
+						AddOutput(self.OutputSlots, id, amt)
+					end
+
+					did = true
+				end
+			end
+		end
+
+		if did then
+			fuel.count = fuel.count - 1
+			if fuel.count <= 0 then self.FuelSlots[1] = nil end
+			self.NextCycle = CurTime() + CYCLE_TIME
+		else
+			self.On = false -- no fuel, nothing to recycle, or outputs full
+		end
+
+		self:Refresh()
+		return true
 	end
 
 	function ENT:Use(btn, ply)
-		net.Start("DockMain")
-		net.WriteEntity(self)
-		net.WriteTable(self.data or {})
-		net.Send(ply)
-		net.Start("DragNDropRust")
-		net.WriteTable(ply.tbl)
-		net.Send(ply)
+		if not IsValid(ply) or not ply:IsPlayer() then return end
+		self.viewer = ply
+		self:SendContents(ply)
+	end
+
+	function ENT:OnTakeDamage(dmg)
 	end
 
 	function ENT:StartTouch(entity)
@@ -150,20 +258,18 @@ if CLIENT then
 	local ent = NULL
 	-- opens your inventory (same as the scoreboard key) and returns it as the parent
 	local function DockInventory()
-		-- open the inventory if it isn't already, the same way the scoreboard key does
 		if not IsValid(GRUST_TEST) then hook.Run("ScoreboardShow") end
 		if not IsValid(GRUST_TEST) then return {} end
 		return {GRUST_TEST}
 	end
 
-	function GRUST_FurnaceMove(ent, action, kind, idx, fromCont, fromSlot)
-		net.Start("grust_FurnaceMove")
+	function GRUST_RecyclerMove(ent, mode, kind, idx, name)
+		net.Start("grust_RecyclerMove")
 		net.WriteEntity(ent)
-		net.WriteString(action) -- "put" or "take"
-		net.WriteString(kind) -- "fuel", "input", "output"
+		net.WriteString(mode)
+		net.WriteString(kind)
 		net.WriteUInt(idx, 4)
-		net.WriteUInt(fromCont or 0, 2) -- only used for "put"
-		net.WriteUInt(fromSlot or 0, 8) -- only used for "put"
+		net.WriteString(name or "")
 		net.SendToServer()
 	end
 
@@ -178,18 +284,16 @@ if CLIENT then
 		local function DoDrop(target, panels, dropped)
 			if not dropped then return end
 			local item = panels[1]
-			if not IsValid(item) or item.furnEnt then -- ignore items already in the furnace
+			local name = IsValid(item) and item.ItemID
+			if not name or item.takeFn then -- ignore items already in the recycler
 				return
 			end
 
-			local fromSlot = item:GetParent()
-			if not IsValid(fromSlot) or not fromSlot.Container then return end
-			GRUST_FurnaceMove(target.IDEnt, "put", target.Kind, target.IDID, fromSlot.Container, fromSlot.SlotID)
+			GRUST_RecyclerMove(target.IDEnt, "put", target.Kind, target.IDID, name)
 		end
 
 		local function FillSlot(slot, i, it)
 			if not it then return end
-			-- borrow grust_SlotsGrid:AddItem so icons look and drag like the inventory ones
 			local fake = {
 				Slots = {
 					[i] = slot
@@ -198,20 +302,18 @@ if CLIENT then
 			}
 
 			local item = GRID.AddItem(fake, i, it.id, it.dur, it.count)
-			if item then item.furnEnt, item.kind, item.idx = ent, slot.Kind, i end
+			print("FillSlot", slot.Kind, i, it.id, item)
+			if item then item.takeFn = function() GRUST_RecyclerMove(ent, "take", slot.Kind, i) end end
 		end
 
 		-- ===== layout =====
-		local LeftMargin = ScrW() * 0.02
-		local RightMargin = ScrW() * 0.05
 		ContainerR = vgui.Create("Panel", frameWork[1])
 		ContainerR:Dock(RIGHT)
 		ContainerR:SetWide(500)
-		-- slots panel is created BEFORE the FILL panel so docking works out
 		local S, P = 84, 4 -- same size as inventory slots
 		local SlotsPanel = vgui.Create("Panel", ContainerR)
 		SlotsPanel:Dock(TOP)
-		SlotsPanel:SetTall(3 * (S + P) + P)
+		SlotsPanel:SetTall(4 * (S + P) + P + 10)
 		SlotsPanel:DockMargin(0, ScrH() * 0.4, 0, 0)
 		local function MakeSlot(x, y, label, kind, idx, accepts)
 			local slot = vgui.Create("DPanel", SlotsPanel)
@@ -227,18 +329,20 @@ if CLIENT then
 			return slot
 		end
 
-		-- row 1: fuel
+		-- row 1: low grade fuel
 		local fuel = MakeSlot(P, P, "FUEL", "fuel", 1, true)
 		FillSlot(fuel, 1, data.fuel and data.fuel[1])
-		-- row 2: two inputs
-		for i = 1, 2 do
-			local s = MakeSlot(P + (i - 1) * (S + P), P + (S + P), "INPUT", "input", i, true)
+		-- rows 2-3: inputs
+		for i = 1, 6 do
+			local col, row = (i - 1) % 3, math.floor((i - 1) / 3)
+			local s = MakeSlot(P + col * (S + P), P + (row + 1) * (S + P), "INPUT", "input", i, true)
 			FillSlot(s, i, data.input and data.input[i])
 		end
 
-		-- row 3: three outputs (take-only, no receiver)
-		for i = 1, 3 do
-			local s = MakeSlot(P + (i - 1) * (S + P), P + 2 * (S + P), "OUTPUT", "output", i, false)
+		-- rows 4-5: outputs (take-only)
+		for i = 1, 6 do
+			local col, row = (i - 1) % 3, math.floor((i - 1) / 3)
+			local s = MakeSlot(P + col * (S + P), P + (row + 3) * (S + P) + 10, "OUTPUT", "output", i, false)
 			FillSlot(s, i, data.output and data.output[i])
 		end
 
@@ -269,18 +373,18 @@ if CLIENT then
 		local Margin = ScrH() * 0.01
 		local ToggleButton = ButtonPanel:Add("DButton")
 		ToggleButton:Dock(LEFT)
-		ToggleButton:SetText("Turn On")
+		ToggleButton:SetText(data.on and "Turned On" or "Turn On")
 		ToggleButton:DockMargin(Margin, Margin, Margin, Margin)
 		ToggleButton:SetWide(ScrW() * 0.11)
 		ToggleButton.DoClick = function(me)
-			net.Start("DockToggle") -- change to your real net message name
+			me:SetText(me:GetText() == "Turn On" and "Turned On" or "Turn Off")
+			net.Start("DockToggle")
 			net.WriteEntity(ent)
 			net.SendToServer()
 		end
 	end)
 
 	function ENT:Draw(flags)
-		-- Draw the model
 		self:DrawModel(flags)
 	end
 end

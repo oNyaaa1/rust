@@ -489,7 +489,7 @@ ITEMS:RegisterItem("GarageDoor", {
     Weapon = nil,
     Count = 50,
     Stackable = true,
-    StackSize = 150,
+    StackSize = 1,
     IzAdmin = true,
     Craft = function()
         return {

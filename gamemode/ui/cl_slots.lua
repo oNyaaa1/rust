@@ -71,11 +71,7 @@ function PANEL:BuildSlots(cols, rows, container)
 end
 
 function PANEL:MoveItem(item, target)
-    if IsValid(item) and item.furnEnt then
-        GRUST_FurnaceMove(item.furnEnt, "take", item.kind, item.idx)
-        return
-    end
-
+    if IsValid(item) and item.takeFn then item.takeFn() end
     if not IsValid(item) or not IsValid(target) then return end
     local fromSlot = item:GetParent()
     if not IsValid(fromSlot) then return end
