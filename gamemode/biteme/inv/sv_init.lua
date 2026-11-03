@@ -343,7 +343,10 @@ function AddItemsToGmodCount(ply, name, dur, wep, amount)
     if not def then return false end
     local cont, slot, existing = FindItem(ply, name)
     if not cont then return false end
-    SetItem(ply, cont, slot, MakeItem(name, dur, wep, amount, slot))
+    local it = GetItem(ply, cont, slot)
+    local left = 30
+    if it then left = it.Count + amount end
+    SetItem(ply, cont, slot, MakeItem(name, dur, wep, math.Round(left), slot))
     SendInv(ply)
     return true
 end
