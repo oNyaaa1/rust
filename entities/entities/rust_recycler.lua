@@ -151,6 +151,7 @@ if SERVER then
 			}
 		elseif mode == "take" then
 			if not slot then return end
+			
 			if not AddItemsToGmodCount(ply, slot.id, slot.dur, nil, slot.count) then return end
 			tbl[idx] = nil
 		else
@@ -302,7 +303,6 @@ if CLIENT then
 			}
 
 			local item = GRID.AddItem(fake, i, it.id, it.dur, it.count)
-			print("FillSlot", slot.Kind, i, it.id, item)
 			if item then item.takeFn = function() GRUST_RecyclerMove(ent, "take", slot.Kind, i) end end
 		end
 

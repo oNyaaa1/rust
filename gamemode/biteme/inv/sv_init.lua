@@ -39,7 +39,6 @@ local function GetSlots(ply, item)
     for k, v in pairs(ply.GInv) do
         for _, j in pairs(v) do
             if j["id"] == item then
-                print(k, v, _, j)
                 items = k
                 cont = _
                 break
@@ -344,6 +343,10 @@ function AddItemsToGmodCount(ply, name, dur, wep, amount)
     local cont, slot, existing = FindItem(ply, name)
     if not cont then return false end
     local it = GetItem(ply, cont, slot)
+    if it == nil then
+        SetItem(ply, cont, slot, MakeItem(name, dur, wep, math.Round(amount), slot))
+        return
+    end
     local left = amount
     if it then left = it.Count + amount end
     SetItem(ply, cont, slot, MakeItem(name, dur, wep, math.Round(left), slot))
