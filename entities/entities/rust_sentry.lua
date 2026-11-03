@@ -32,7 +32,7 @@ function FindTarget(ent)
     for k, v in pairs(player.GetAll()) do
         local distance = v:GetPos():Distance(ent:GetPos())
         if v == ent then continue end
-        if distance >= 0 and v.SafeZone and v.Cursed == true then targ = v end
+        if distance >= 0 and v.SafeZone == true then targ = v end
     end
     return targ
 end
@@ -44,7 +44,7 @@ function ENT:Think()
     if target == NULL then
         self.yaw_pos:SetAngles(Angle(0, math.sin(CurTime() * 0.5) * 90, 0))
         self.pitch:SetAngles(Angle(math.sin(CurTime() * 0.5) * 1, math.sin(CurTime() * 0.5) * 90, 0))
-    elseif target and IsValid(target) then
+    elseif target and IsValid(target) and target.Cursed then
         self.yaw_pos:SetAngles((self:GetPos() - target:GetPos()):Angle())
         self.pitch:SetAngles((self:GetPos() - target:GetPos()):Angle())
         local bullet = {}
