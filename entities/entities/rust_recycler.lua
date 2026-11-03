@@ -151,7 +151,6 @@ if SERVER then
 			}
 		elseif mode == "take" then
 			if not slot then return end
-			
 			if not AddItemsToGmodCount(ply, slot.id, slot.dur, nil, slot.count) then return end
 			tbl[idx] = nil
 		else

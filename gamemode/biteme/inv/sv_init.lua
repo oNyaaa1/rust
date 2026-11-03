@@ -343,10 +343,10 @@ function AddItemsToGmodCount(ply, name, dur, wep, amount)
     local cont, slot, existing = FindItem(ply, name)
     if not cont then return false end
     local it = GetItem(ply, cont, slot)
-    if it == nil then
-        SetItem(ply, cont, slot, MakeItem(name, dur, wep, math.Round(amount), slot))
-        return
-    end
+    --if it == nil then
+    --SetItem(ply, cont, slot, MakeItem(name, dur, wep, math.Round(amount), slot))
+    -- return
+    --end
     local left = amount
     if it then left = it.Count + amount end
     SetItem(ply, cont, slot, MakeItem(name, dur, wep, math.Round(left), slot))
@@ -459,10 +459,33 @@ net.Receive("grust_MoveItem", function(_, ply)
         return
     end
 
+    -- Stack items
+    if b and a.id == b.id then
+        local itemData = ITEMS:GetItem(a.id)
+        if itemData and itemData.StackSize then
+            local maxStack = itemData.StackSize or 1
+            local space = maxStack - b.Count
+            if space > 0 then
+                local moved = math.min(a.Count, space)
+                b.Count = b.Count + moved
+                a.Count = a.Count - moved
+                if a.Count <= 0 then
+                    SetItem(ply, fromCont, from, nil)
+                else
+                    SetItem(ply, fromCont, from, a)
+                end
+
+                SetItem(ply, toCont, to, b)
+                SendInv(ply)
+                return
+            end
+        end
+    end
+
+    local item = GetItem(ply, toCont, to)
     SetItem(ply, fromCont, from, b)
     SetItem(ply, toCont, to, a)
     -- only treat the destination as the selected slot when it is the hotbar
-    local item = GetItem(ply, toCont, to)
     if toCont == HOT then ply.SelectedITEMS[1] = {HOT, to, item.id} end
     SendInv(ply)
 end)
