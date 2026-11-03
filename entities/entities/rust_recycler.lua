@@ -11,6 +11,8 @@ if SERVER then
 	util.AddNetworkString("DockMain")
 	util.AddNetworkString("gRustRecycler")
 	util.AddNetworkString("Rust_recyclerInv")
+	util.AddNetworkString("DockToggle")
+	util.AddNetworkString("grust_FurnaceMove")
 	function ENT:Initialize()
 		self:SetModel("models/environment/misc/recycler.mdl")
 		self:PhysicsInit(SOLID_VPHYSICS)
@@ -23,9 +25,73 @@ if SERVER then
 			phys:EnableMotion(false)
 		end
 
-
+		self.FuelSlots, self.InputSlots, self.OutputSlots = {}, {}, {}
 		self.CD = 0
 	end
+
+	net.Receive("DockToggle", function(len, ply)
+		local ent = net.ReadEntity()
+		if not IsValid(ent) or ent:GetPos():DistToSqr(ply:GetPos()) > 200 * 200 then return end
+		-- call your toggle function here, e.g. ent:Togglez()
+	end)
+
+	util.AddNetworkString("grust_FurnaceMove")
+	function ENT:SendContents(ply)
+		net.Start("DockMain")
+		net.WriteEntity(self)
+		net.WriteTable({
+			fuel = self.FuelSlots,
+			input = self.InputSlots,
+			output = self.OutputSlots,
+		})
+
+		net.Send(ply)
+	end
+
+	net.Receive("grust_FurnaceMove", function(len, ply)
+		local ent = net.ReadEntity()
+		local action = net.ReadString()
+		local kind = net.ReadString()
+		local idx = net.ReadUInt(4)
+		local fromCont = net.ReadUInt(2)
+		local fromSlot = net.ReadUInt(8)
+		if not IsValid(ent) or ent:GetPos():DistToSqr(ply:GetPos()) > 200 * 200 then return end
+		local tbl = ({
+			fuel = ent.FuelSlots,
+			input = ent.InputSlots,
+			output = ent.OutputSlots
+		})[kind]
+
+		if not tbl then return end
+		if action == "put" then
+			if kind == "output" then -- outputs are take-only
+				return
+			end
+
+			if tbl[idx] then -- slot already full
+				return
+			end
+
+			-- PLACEHOLDER: replace with your real inventory functions
+			local item = GetInventoryItem(ply, fromCont, fromSlot)
+			if not item then return end
+			tbl[idx] = {
+				id = item.id,
+				dur = item.dur,
+				count = item.count
+			}
+
+			RemoveInventoryItem(ply, fromCont, fromSlot)
+		elseif action == "take" then
+			local item = tbl[idx]
+			if not item then return end
+			-- PLACEHOLDER: replace with your real "give item" function
+			if not GiveInventoryItem(ply, item.id, item.count, item.dur) then return end
+			tbl[idx] = nil
+		end
+
+		ent:SendContents(ply)
+	end)
 
 	function ENT:SpawnFunction(ply, tr)
 		if not tr.Hit then return end
@@ -80,40 +146,109 @@ if CLIENT then
 	function ENT:Initialize()
 	end
 
-	local function DoDrop(self, droppedPanels, bDoDrop)
-		local dragged = droppedPanels[1] -- panel being dragged
-		local target = self -- slot receiving the drop
-		if bDoDrop then
-			net.Start("gRustRecycler")
-			net.WriteString(dragged.Weap) -- weapon/item id
-			net.WriteEntity(target.IDEnt)
-			net.WriteFloat(target.IDID)
-			net.SendToServer()
-			dragged:SetParent(target)
-			return -- Exit here, don't drop to world
-		end
+	local ContainerR = NULL
+	local ent = NULL
+	-- opens your inventory (same as the scoreboard key) and returns it as the parent
+	local function DockInventory()
+		-- open the inventory if it isn't already, the same way the scoreboard key does
+		if not IsValid(GRUST_TEST) then hook.Run("ScoreboardShow") end
+		if not IsValid(GRUST_TEST) then return {} end
+		return {GRUST_TEST}
 	end
 
-	local Container = NULL
-	local ent = NULL
+	function GRUST_FurnaceMove(ent, action, kind, idx, fromCont, fromSlot)
+		net.Start("grust_FurnaceMove")
+		net.WriteEntity(ent)
+		net.WriteString(action) -- "put" or "take"
+		net.WriteString(kind) -- "fuel", "input", "output"
+		net.WriteUInt(idx, 4)
+		net.WriteUInt(fromCont or 0, 2) -- only used for "put"
+		net.WriteUInt(fromSlot or 0, 8) -- only used for "put"
+		net.SendToServer()
+	end
+
 	net.Receive("DockMain", function()
 		ent = net.ReadEntity()
 		local data = net.ReadTable()
-		if IsValid(Container) then Container:Remove() end
+		if IsValid(ContainerR) then ContainerR:Remove() end
 		local frameWork = DockInventory()
 		if not frameWork[1] then return end
+		-- ===== drag and drop helpers (must be defined before the slots) =====
+		local GRID = vgui.GetControlTable("grust_SlotsGrid")
+		local function DoDrop(target, panels, dropped)
+			if not dropped then return end
+			local item = panels[1]
+			if not IsValid(item) or item.furnEnt then -- ignore items already in the furnace
+				return
+			end
+
+			local fromSlot = item:GetParent()
+			if not IsValid(fromSlot) or not fromSlot.Container then return end
+			GRUST_FurnaceMove(target.IDEnt, "put", target.Kind, target.IDID, fromSlot.Container, fromSlot.SlotID)
+		end
+
+		local function FillSlot(slot, i, it)
+			if not it then return end
+			-- borrow grust_SlotsGrid:AddItem so icons look and drag like the inventory ones
+			local fake = {
+				Slots = {
+					[i] = slot
+				},
+				MoveItem = function(_, item, target) DoDrop(target, {item}, true) end,
+			}
+
+			local item = GRID.AddItem(fake, i, it.id, it.dur, it.count)
+			if item then item.furnEnt, item.kind, item.idx = ent, slot.Kind, i end
+		end
+
+		-- ===== layout =====
 		local LeftMargin = ScrW() * 0.02
 		local RightMargin = ScrW() * 0.05
 		ContainerR = vgui.Create("Panel", frameWork[1])
 		ContainerR:Dock(RIGHT)
-		ContainerR:SetTall(200)
 		ContainerR:SetWide(500)
-		Container = ContainerR:Add("Panel")
+		-- slots panel is created BEFORE the FILL panel so docking works out
+		local S, P = 84, 4 -- same size as inventory slots
+		local SlotsPanel = vgui.Create("Panel", ContainerR)
+		SlotsPanel:Dock(TOP)
+		SlotsPanel:SetTall(3 * (S + P) + P)
+		SlotsPanel:DockMargin(0, ScrH() * 0.4, 0, 0)
+		local function MakeSlot(x, y, label, kind, idx, accepts)
+			local slot = vgui.Create("DPanel", SlotsPanel)
+			slot:SetSize(S, S)
+			slot:SetPos(x, y)
+			slot.IDEnt, slot.IDID, slot.Kind = ent, idx, kind
+			if accepts then slot:Receiver("grust_item", DoDrop) end
+			slot.Paint = function(me, w, h)
+				surface.SetDrawColor(80, 76, 70, 100)
+				surface.DrawRect(0, 0, w, h)
+				draw.SimpleText(label, "Default", 4, 3, Color(255, 255, 255, 200))
+			end
+			return slot
+		end
+
+		-- row 1: fuel
+		local fuel = MakeSlot(P, P, "FUEL", "fuel", 1, true)
+		FillSlot(fuel, 1, data.fuel and data.fuel[1])
+		-- row 2: two inputs
+		for i = 1, 2 do
+			local s = MakeSlot(P + (i - 1) * (S + P), P + (S + P), "INPUT", "input", i, true)
+			FillSlot(s, i, data.input and data.input[i])
+		end
+
+		-- row 3: three outputs (take-only, no receiver)
+		for i = 1, 3 do
+			local s = MakeSlot(P + (i - 1) * (S + P), P + 2 * (S + P), "OUTPUT", "output", i, false)
+			FillSlot(s, i, data.output and data.output[i])
+		end
+
+		-- ===== controls bar =====
+		local Container = ContainerR:Add("Panel")
 		Container:Dock(FILL)
 		local Controls = Container:Add("Panel")
-		Controls:Dock(BOTTOM)
+		Controls:Dock(TOP)
 		Controls:SetTall(ScrH() * 0.13)
-		Controls:DockMargin(LeftMargin, 0, RightMargin, ScrH() * 0.15)
+		Controls:DockMargin(0, ScrH() * 0.01, 0, 0)
 		local Title = Controls:Add("Panel")
 		Title:Dock(TOP)
 		Title:SetTall(ScrH() * 0.03)
@@ -121,6 +256,7 @@ if CLIENT then
 		Title.Paint = function(me, w, h)
 			surface.SetDrawColor(80, 76, 70, 100)
 			surface.DrawRect(0, 0, w, h)
+			draw.SimpleText("CONTROLS", "Default", 6, h / 2, Color(255, 255, 255, 200), 0, 1)
 		end
 
 		local ButtonPanel = Controls:Add("Panel")
@@ -136,61 +272,12 @@ if CLIENT then
 		ToggleButton:SetText("Turn On")
 		ToggleButton:DockMargin(Margin, Margin, Margin, Margin)
 		ToggleButton:SetWide(ScrW() * 0.11)
-		ToggleButton.Think = function(me) end
-		ToggleButton.DoClick = function(me) self:Togglez() end
-		gui.EnableScreenClicker(true)
-		local grid2 = vgui.Create("ThreeGrid", ContainerR)
-		grid2:Dock(FILL)
-		grid2:DockMargin(4, 4, 4, 4)
-		grid2:InvalidateParent(true)
-		grid2:SetColumns(6)
-		grid2:SetHorizontalMargin(2)
-		grid2:SetVerticalMargin(2)
-		local ContainerAbove = vgui.Create("Panel", ContainerR)
-		ContainerAbove:Dock(TOP)
-		ContainerAbove:SetTall(300)
-		ContainerAbove:SetWide(100)
-		ContainerAbove:DockMargin(0, 0, 0, 140)
-		for i = 1, 6 do
-			local Name = vgui.Create("Panel")
-			Name:SetTall(100)
-			Name:SetWide(500)
-			Name:Receiver("DroppableRust", DoDrop)
-			Name.IDEnt = ent
-			Name.IDID = i
-			Name.Paint = function(me, w, h)
-				surface.SetDrawColor(80, 76, 70, 100)
-				surface.DrawRect(0, 0, w, h)
-				draw.SimpleText("INPUT", "Default", w * 0.01, h * 0.1, Color(255, 255, 255, 200), 0, 1)
-			end
-
-			grid2:AddCell(Name)
-		end
-
-		for i = 1, 6 do
-			local Name = vgui.Create("Panel")
-			Name:SetTall(100)
-			Name:SetWide(500)
-			Name:Receiver("DroppableRust", DoDrop)
-			Name.IDEnt = ent
-			Name.Paint = function(me, w, h)
-				surface.SetDrawColor(80, 76, 70, 100)
-				surface.DrawRect(0, 0, w, h)
-				draw.SimpleText("OUTPUT", "Default", w * 0.01, h * 0.1, Color(255, 255, 255, 200), 0, 1)
-			end
-
-			grid2:AddCell(Name)
+		ToggleButton.DoClick = function(me)
+			net.Start("DockToggle") -- change to your real net message name
+			net.WriteEntity(ent)
+			net.SendToServer()
 		end
 	end)
-
-	function ENT:Think()
-		if not IsValid(ent) then return end
-		local distance = ent:GetPos():Distance(LocalPlayer():GetPos())
-		if distance > 100 then
-			GetFrameWorkFrame():Remove()
-			gui.EnableScreenClicker(false)
-		end
-	end
 
 	function ENT:Draw(flags)
 		-- Draw the model

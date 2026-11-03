@@ -189,6 +189,17 @@ RustOfficial.ITEMS = {
         Craftable = true,
         BluePrint = false,
     },
+    LowGradeFueld = {
+        name = "Low Grade fuel",
+        color = Color(200, 60, 60),
+        image = "materials/items/resources/low_grade_fuel.png",
+        func = function(ply) end,
+        weapon = nil,
+        Max = 150,
+        wModel = "models/environment/misc/loot_bag.mdl",
+        Craftable = true,
+        BluePrint = false,
+    },
 }
 
 function RustOfficial.GetItem(key)

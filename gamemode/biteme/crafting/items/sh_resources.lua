@@ -1,6 +1,7 @@
-ITEMS:RegisterItem("Low Grade Fuel", {
+ITEMS:RegisterItem("LowGradeFueld", {
     Name = "Low Grade Fuel",
     Info = "For syringes",
+    InfoTag = "LowGradeFueld",
     Category = "Resources",
     model = "materials/items/resources/low_grade_fuel.png",
     Weapon = "",
@@ -25,5 +26,3 @@ ITEMS:RegisterItem("Low Grade Fuel", {
         }
     end,
 }, "Resources")
-
-
