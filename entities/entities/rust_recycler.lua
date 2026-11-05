@@ -11,7 +11,7 @@ if SERVER then
 	util.AddNetworkString("DockMain")
 	util.AddNetworkString("gRustRecycler")
 	util.AddNetworkString("Rust_recyclerInv")
-	util.AddNetworkString("DockToggle")
+	util.AddNetworkString("DockTogglezzz")
 	util.AddNetworkString("grust_RecyclerMove")
 	function ENT:Initialize()
 		self:SetModel("models/environment/misc/recycler.mdl")
@@ -28,12 +28,6 @@ if SERVER then
 		self.FuelSlots, self.InputSlots, self.OutputSlots = {}, {}, {}
 		self.CD = 0
 	end
-
-	net.Receive("DockToggle", function(len, ply)
-		local ent = net.ReadEntity()
-		if not IsValid(ent) or ent:GetPos():DistToSqr(ply:GetPos()) > 200 * 200 then return end
-		-- call your toggle function here, e.g. ent:Togglez()
-	end)
 
 	function ENT:SendContents(ply)
 		net.Start("DockMain")
@@ -178,7 +172,7 @@ if SERVER then
 		table.insert(ent.data, {slotid, str})
 	end)
 
-	net.Receive("DockToggle", function(_, ply)
+	net.Receive("DockTogglezzz", function(_, ply)
 		local ent = net.ReadEntity()
 		if not IsValid(ent) or ent:GetClass() ~= "rust_recycler" then return end
 		if ply:GetPos():DistToSqr(ent:GetPos()) > 250 * 250 then return end
@@ -186,6 +180,15 @@ if SERVER then
 		if ent.On and not ent.FuelSlots[1] then ent.On = false end
 		ent.NextCycle = CurTime() + CYCLE_TIME
 		ent:SendContents(ply)
+		if not ent.Dockered then ent.Dockered = false end
+		ent.Dockered = not ent.Dockered
+		if ent.Dockered then
+			ent:EmitSound("farming/recycle_start.wav")
+			timer.Simple(1, function() ent.EmitSoundO = ent:StartLoopingSound("farming/recycle_loop.wav") end)
+		else
+			ent:EmitSound("farming/recycle_stop.wav")
+			ent:StopLoopingSound(ent.EmitSoundO)
+		end
 	end)
 
 	function ENT:Refresh()
@@ -220,6 +223,7 @@ if SERVER then
 			self.NextCycle = CurTime() + CYCLE_TIME
 		else
 			self.On = false -- no fuel, nothing to recycle, or outputs full
+			self:StopLoopingSound(self.EmitSoundO)
 		end
 
 		self:Refresh()
@@ -230,6 +234,7 @@ if SERVER then
 		if not IsValid(ply) or not ply:IsPlayer() then return end
 		self.viewer = ply
 		self:SendContents(ply)
+		self:EmitSound("farming/recycler_open.wav")
 	end
 
 	function ENT:OnTakeDamage(dmg)
@@ -375,10 +380,11 @@ if CLIENT then
 		ToggleButton:DockMargin(Margin, Margin, Margin, Margin)
 		ToggleButton:SetWide(ScrW() * 0.11)
 		ToggleButton.DoClick = function(me)
-			me:SetText(me:GetText() == "Turn On" and "Turned On" or "Turn Off")
-			net.Start("DockToggle")
+			print(ent)
+			net.Start("DockTogglezzz")
 			net.WriteEntity(ent)
 			net.SendToServer()
+			me:SetText(me:GetText() == "Turn On" and "Turned On" or "Turn Off")
 		end
 	end)
 

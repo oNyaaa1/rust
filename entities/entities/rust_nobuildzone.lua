@@ -14,12 +14,10 @@ end
 
 function ENT:StartTouch(pl)
     if not pl:IsPlayer() then return end
-    print(true)
     RunBlockedZone(pl)
 end
 
 function ENT:EndTouch(pl)
     if not pl:IsPlayer() then return end
-    print(false)
     RunBlockedZonez(pl)
 end

@@ -78,6 +78,7 @@ end
 
 function PANEL:MoveItem(item, target)
     if not IsValid(item) or not IsValid(target) then return end
+    if item.takeFn then return item.takeFn() end
     local fromSlot = item:GetParent()
     if not IsValid(fromSlot) then return end
     local fromCont = fromSlot.Container
@@ -85,7 +86,7 @@ function PANEL:MoveItem(item, target)
     local toCont = target.Container
     local to = target.SlotID
     if not from or not to or not fromCont or not toCont then return end
-    if fromCont == from and toCont == to then return end
+    if fromCont == toCont and from == to then return end
     net.Start("grust_MoveItem")
     net.WriteUInt(fromCont, CONT_BITS)
     net.WriteUInt(from, 8)
@@ -104,6 +105,19 @@ function PANEL:AddItem(slotID, itemID, dur, count)
     local item = vgui.Create("DPanel", slot)
     item:SetSize(slot:GetWide(), slot:GetTall())
     item.ItemID = itemID
+    item:Droppable("grust_item")
+    item.DoDoubleClick = function(self) if self.takeFn then return self.takeFn() end end
+    item.OnMousePressed = function(self, code)
+        if self.takeFn and code == MOUSE_RIGHT then return self.takeFn() end
+        self:MouseCapture(true)
+        self:DragMousePress(code)
+    end
+
+    item.OnMouseReleased = function(self, code)
+        self:MouseCapture(false)
+        self:DragMouseRelease(code)
+    end
+
     item:SetTooltip(def.name .. " (" .. dur .. "%)")
     item.Paint = function(_, w, h)
         local pad, barW = 4, 6
