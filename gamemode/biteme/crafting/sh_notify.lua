@@ -19,7 +19,6 @@ if SERVER then
     end
 
     function RustNotifyRemove(ply, id)
-        if not IsValid(ply) then return end
         net.Start("RustNotify")
         net.WriteString(id)
         net.WriteString("")

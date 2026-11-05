@@ -221,7 +221,6 @@ local function RightPanelInfo(parent, ITEM)
     end
 
     Buttonzz.DoClick = function()
-        PrintTable(ITEM)
         net.Start("CraftingAbility")
         net.WriteTable({
             {

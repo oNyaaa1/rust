@@ -50,7 +50,6 @@ if SERVER then
 			AddItemsToGmodCount(ply, item["InfoTag"], math.random(50, 60), tbl[2].Weapon, item["StackSize"])
 			--AddItemsToGmod(ply, "Inventory", 1, item["InfoTag"], math.random(50, 60), item["Weapon"], item["StackSize"])
 			for k, v in pairs(item:Craft()) do
-				print(k, v)
 				for items, itemData in pairs(v) do
 					if isnumber(items) then GInv_RemoveItem(ply, v[items].ITEM, v[items].AMOUNT) end
 				end
@@ -66,7 +65,6 @@ if SERVER then
 		if #Queues[id] >= MAX_QUEUE then return end
 		AddItemsToGmodCount(ply, item["InfoTag"], math.random(50, 60), item["Weapon"], item["StackSize"])
 		for k, v in pairs(item:Craft()) do
-			print(k, v)
 			for items, itemData in pairs(v) do
 				if isnumber(items) then GInv_RemoveItem(ply, v[items].ITEM, v[items].AMOUNT) end
 			end
