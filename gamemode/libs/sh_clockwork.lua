@@ -1,6 +1,7 @@
 if SERVER then game.ConsoleCommand("sv_hibernate_think 1\n") end
 CLOCKWORK = CLOCKWORK or {}
 CLOCKWORK.Bytes = {}
+CreateConVar("Debug_day_system", 0, {FCVAR_REPLICATED, FCVAR_ARCHIVE})
 function CLOCKWORK:Add(name, bytes, item, clock)
     CLOCKWORK.Bytes[name] = {
         {
@@ -69,7 +70,6 @@ end
 local function SetPhase(name)
     local compl = CLOCKWORK:GetITEM(name)
     if CLIENT then Night = compl == "Night" end
-    print("Phase:", name, "started at", string.format("%.1f", CurTime()))
 end
 
 local function GetDuration(name)
@@ -96,6 +96,11 @@ end
 
 local LastPhase
 timer.Create("ClearTimerClockWork", 1, 0, function()
+    if GetConVar("Debug_day_system"):GetInt() > 0 then
+        SetPhase("Day")
+        return
+    end
+
     local name = GetPhase()
     if name ~= LastPhase then
         SetPhase(GetPhase())

@@ -16,6 +16,8 @@ if SERVER then
         ["rust_furnace"] = "Furnace",
         ["sent_garagedoor"] = "GarageDoor",
         ["rust_tc"] = "ToolCupboard",
+        ["sent_door"] = "WoodDeployDoor",
+        ["sent_metal_door"] = "MetalDeployDoor",
     }
 
     net.Receive("GarageDoorPlaceL", function(len, ply)
@@ -24,7 +26,8 @@ if SERVER then
         if name ~= "doorwayl" and IDS[bang] == "GarageDoor" then return end
         if name ~= "sent_foundation" and IDS[bang] == "ToolCupboard" then return end
         DEPLOY.FItem(ply, bang, pos, ang)
-        DeleteItem(ply, IDS[bang])
+        print(bang, IDS[bang])
+        GInv_RemoveItem(ply, IDS[bang], 1)
         SendInv(ply)
     end)
 end
@@ -192,7 +195,45 @@ RustOfficial.ITEMS = {
             end
         end,
         weapon = nil,
-        Max = 2000,
+        Max = 1,
+        wModel = "models/environment/misc/loot_bag.mdl",
+        Craftable = true,
+        BluePrint = false,
+    },
+    WoodDeployDoor = {
+        name = "Wood Door",
+        color = Color(200, 60, 60),
+        image = "materials/items/deployable/wooden_door.png",
+        func = function(ply)
+            if SERVER then
+                ply.SelectedGarageDoor = nil
+                net.Start("SendClientinfoGDL")
+                net.WriteBool(true)
+                net.WriteString("sent_door")
+                net.Send(ply)
+            end
+        end,
+        weapon = nil,
+        Max = 1,
+        wModel = "models/environment/misc/loot_bag.mdl",
+        Craftable = true,
+        BluePrint = false,
+    },
+    MetalDeployDoor = {
+        name = "Metal Door",
+        color = Color(200, 60, 60),
+        image = "materials/items/deployable/metal_door.png",
+        func = function(ply)
+            if SERVER then
+                ply.SelectedGarageDoor = nil
+                net.Start("SendClientinfoGDL")
+                net.WriteBool(true)
+                net.WriteString("sent_metal_door")
+                net.Send(ply)
+            end
+        end,
+        weapon = nil,
+        Max = 1,
         wModel = "models/environment/misc/loot_bag.mdl",
         Craftable = true,
         BluePrint = false,

@@ -12,10 +12,6 @@ RadialMenu.Items = {
         class = "sent_wall"
     },
     {
-        name = "Door",
-        class = "sent_door"
-    },
-    {
         name = "Ceiling",
         class = "sent_ceiling"
     },

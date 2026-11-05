@@ -23,15 +23,16 @@ ITEMS:RegisterItem("ToolCupboard", {
     end,
 }, "Construction")
 
-ITEMS:RegisterItem("rust_deploy_door", {
+ITEMS:RegisterItem("WoodDeployDoor", {
     Name = "Wooden Door",
     Info = "Wooden Door For the door frame",
+    InfoTag = "WoodDeployDoor",
     Category = "Construction",
     model = "materials/items/deployable/wooden_door.png",
     Weapon = "rust_deploy_door",
     Count = 50,
     Stackable = true,
-    StackSize = 150,
+    StackSize = 1,
     IzAdmin = true,
     Craft = function()
         return {
@@ -47,12 +48,13 @@ ITEMS:RegisterItem("rust_deploy_door", {
     end,
 }, "Construction")
 
-ITEMS:RegisterItem("rust_deploy_doorway_metal", {
+ITEMS:RegisterItem("MetalDeployDoor", {
     Name = "Sheet Metal Door",
     Info = "Sheet Metal Door For the door frame",
+    InfoTag = "MetalDeployDoor",
     Category = "Construction",
     model = "materials/items/deployable/metal_door.png",
-    Weapon = "rust_deploy_doorway_metal",
+    Weapon = nil,
     Count = 50,
     Stackable = true,
     StackSize = 150,
@@ -478,7 +480,6 @@ ITEMS:RegisterItem("rust_deploy_metal_sf", {
         }
     end,
 }, "Construction")
-
 
 ITEMS:RegisterItem("GarageDoor", {
     Name = "Garage Door",

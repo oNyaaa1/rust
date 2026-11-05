@@ -22,6 +22,7 @@ DEPLOY.AllowedOn = {
         sent_foundation = false,
         sent_doorwayl = true,
         sent_hwall = true,
+        sent_metal_door = true,
     },
     sent_ceiling = {
         sent_stairs = true,
@@ -32,6 +33,7 @@ DEPLOY.AllowedOn = {
         sent_foundation = false,
         sent_doorwayl = true,
         sent_hwall = true,
+        sent_metal_door = true,
     },
     sent_doorwayl = {
         sent_garagedoor = true,
@@ -39,6 +41,7 @@ DEPLOY.AllowedOn = {
         sent_wall = false,
         sent_door = false,
         sent_hwall = false,
+        sent_metal_door = true,
     }
 }
 
@@ -46,6 +49,7 @@ DEPLOY.ClassDist = {
     sent_foundation = 132.78, -- full spacing (neighbouring foundation)
     sent_wall = 72.9, -- half width = the edge
     sent_door = 72.9,
+    sent_metal_door = 72.9,
     sent_doorway = 72.9,
     sent_stairs = 0,
     sent_ceiling = 0,
@@ -60,6 +64,7 @@ DEPLOY.ClassRot = {
     sent_wall = 90,
     sent_hwall = 90,
     sent_door = 90,
+    sent_metal_door = 90,
     sent_doorway = 90,
     sent_stairs = 90,
     sent_ceiling = 0,
@@ -79,6 +84,7 @@ DEPLOY.ClassZ = {
     sent_wall = 0,
     sent_hwall = 0,
     sent_door = 0,
+    sent_metal_door = 0,
     sent_doorway = 0,
     sent_stairs = 0,
     sent_ceiling = 0,
@@ -133,6 +139,7 @@ DEPLOY.BaseClasses = {
 
 DEPLOY.ClassSide = {
     sent_door = -25, -- start at 0, then nudge until it sits in the middle of the frame
+    sent_metal_door = -25,
 }
 
 DEPLOY.GarageOffset = Vector(0, 0, 0)
@@ -268,6 +275,7 @@ DEPLOY.SkipUpper["sent_foundation"] = true
 DEPLOY.FoundationHalf = 64 -- half your foundation's width
 DEPLOY.FoundationHeight = 32 -- your foundation's height
 DEPLOY.FoundationRaise = 128 / 2 -- height of one level
+DEPLOY.GroundTolerance = 8
 local IDS = {
     ["rust_furnace"] = "rust_furnace",
     ["sent_garagedoor"] = "sent_garagedoor",
@@ -285,9 +293,10 @@ function DEPLOY:HasGroundSupport(pos, ang)
         local tr = util.TraceLine({
             start = wp + Vector(0, 0, up),
             endpos = wp - Vector(0, 0, down),
-            mask = MASK_SOLID_BRUSHONLY,
+            mask = MASK_NPCWORLDSTATIC,
         })
 
+        if tr.StartSolid then return false, pos.z, pos.z end
         if not tr.Hit then return false, pos.z, pos.z end
         if i == 1 then
             lowZ, highZ = tr.HitPos.z, tr.HitPos.z
@@ -304,7 +313,6 @@ function DEPLOY:HasGroundSupport(pos, ang)
     return true, lowZ, highZ
 end
 
-DEPLOY.GroundTolerance = 8
 function DEPLOY:GetSocket(ply, class)
     if not IsValid(ply) then return end
     class = string.lower(class or "")
@@ -344,18 +352,13 @@ function DEPLOY:GetSocket(ply, class)
 
     if not IsValid(base) or not (self.BaseClasses and self.BaseClasses[base:GetClass()]) then
         if class == "sent_foundation" then
-            -- must be aiming at real world ground, on a fairly flat surface
             if not tr.HitWorld or tr.HitNormal.z < 0.7 then return fallbackPos, fallbackAng, "none", tr.Entity end
             local offset = self:GetLevelOffset(ply, class, "worldspawn") or 0
-            local pos = Vector(tr.HitPos.x, tr.HitPos.y, tr.HitPos.z + offset)
+            local pos = Vector(tr.HitPos.x, tr.HitPos.y, tr.HitPos.z)
             local ok, lowZ, highZ = self:HasGroundSupport(pos, fallbackAng)
             if not ok then return fallbackPos, fallbackAng, "none", tr.Entity end
-            -- ground is higher than the base: sit the foundation half out of the ground
-            if highZ > pos.z then
-                local h = self.FoundationHeight or 32
-                pos.z = highZ - h * 0.5
-                if not self:HasGroundSupport(pos, fallbackAng) then return fallbackPos, fallbackAng, "none", tr.Entity end
-            end
+            if highZ > pos.z then pos.z = highZ - (self.FoundationHeight or 32) * 0.5 end
+            pos.z = pos.z + offset -- raise AFTER the ground check
             return pos, fallbackAng, "worldspawn"
         end
 

@@ -316,8 +316,21 @@ hook.Add("ScoreboardShow", "Scoreboard_Open", function()
     icon:SetSize(400, 400)
     icon:SetModel(LocalPlayer():GetModel())
     icon:SetLookAt(Vector(20, LocalPlayer():GetForward().y, 40))
+    local lp_Ents = {}
     function icon:LayoutEntity(ent)
         ent:SetAngles(Angle(0, 30, 0))
+        lp_Ents = {ent}
+    end
+
+    local whiteMat = Material("models/debug/debugwhite")
+    function icon:PostDrawModel(ent)
+        render.MaterialOverride(whiteMat)
+        render.SetColorModulation(0.5, 0.6, 1)
+        render.SetBlend(0.1)
+        ent:DrawModel()
+        render.SetBlend(0.5)
+        render.SetColorModulation(0.2, 0.2, 0.2)
+        render.MaterialOverride()
     end
 
     icon:SetPos(math.max(10, invBox:GetX() - charBox:GetWide() - 20), invBox:GetY() - 120)
