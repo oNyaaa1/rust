@@ -15,6 +15,8 @@ local RUST_SELECTED = Color(0, 120, 120, 255)
 local RUST_ACCENT = Color(0, 150, 150, 255)
 local RUST_TEXT = Color(200, 200, 180, 255)
 local RUST_TEXT_DIM = Color(150, 150, 140, 255)
+local gInv = {}
+net.Receive("GInvneotryRust", function() gInv = net.ReadTable() end)
 local function CreateCraftRow(parent, materialName, needAmount, playerHave)
     local row = vgui.Create("DPanel", parent)
     row:SetTall(40)
@@ -32,7 +34,8 @@ local function CreateCraftRow(parent, materialName, needAmount, playerHave)
         -- Amount section
         draw.SimpleText(tostring(needAmount or ""), "DermaDefault", amountW / 2, h / 2, RUST_TEXT, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         -- Item name section
-        draw.SimpleText(tostring(materialName or ""), "DermaDefault", amountW + 10, h / 2, RUST_TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        local names = RustOfficial.GetItem(materialName)
+        draw.SimpleText(tostring(names and names.name or ""), "DermaDefault", amountW + 10, h / 2, RUST_TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
         -- Total section
         draw.SimpleText(tostring(needAmount or ""), "DermaDefault", amountW + itemW + totalW / 2, h / 2, RUST_TEXT, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         -- Have section (with color indication)
@@ -164,9 +167,10 @@ local function RightPanelInfo(parent, ITEM)
                     for i, j in ipairs(v) do
                         if istable(j) and j.ITEM and j.AMOUNT then
                             local playerHave = 0
-                            for _, a in pairs({}) do
-                                if a.Weapon == j.ITEM then
-                                    playerHave = a.Amount or 0
+                            for _, a in pairs(gInv) do
+                                local select = a["Inventory"]
+                                if select and select.id == j.ITEM then
+                                    playerHave = select.Count or 0
                                     break
                                 end
                             end
@@ -217,6 +221,7 @@ local function RightPanelInfo(parent, ITEM)
     end
 
     Buttonzz.DoClick = function()
+        PrintTable(ITEM)
         net.Start("CraftingAbility")
         net.WriteTable({
             {
@@ -224,6 +229,9 @@ local function RightPanelInfo(parent, ITEM)
             },
             {
                 Weapon = ITEM.Weapon
+            },
+            {
+                Category = ITEM.Category
             },
         })
 
@@ -234,6 +242,8 @@ local function RightPanelInfo(parent, ITEM)
 end
 
 function ITEMS.DrawQMenu()
+    net.Start("SendDatagRust")
+    net.SendToServer()
     if IsValid(crafting_frame) then crafting_frame:Remove() end
     local x, y = ScrW(), ScrH()
     crafting_frame = vgui.Create("DFrame")

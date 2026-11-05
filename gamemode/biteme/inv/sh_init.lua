@@ -4,6 +4,14 @@ RustOfficial.GhostGD.GhostModel = ""
 if SERVER then
     util.AddNetworkString("SendClientinfoGDL")
     util.AddNetworkString("GarageDoorPlaceL")
+    util.AddNetworkString("GInvneotryRust")
+    util.AddNetworkString("SendDatagRust")
+    net.Receive("SendDatagRust", function(len, ply)
+        net.Start("GInvneotryRust")
+        net.WriteTable(ply.GInv)
+        net.Send(ply)
+    end)
+
     local IDS = {
         ["rust_furnace"] = "Furnace",
         ["sent_garagedoor"] = "GarageDoor",
@@ -196,6 +204,39 @@ RustOfficial.ITEMS = {
         func = function(ply) end,
         weapon = nil,
         Max = 150,
+        wModel = "models/environment/misc/loot_bag.mdl",
+        Craftable = true,
+        BluePrint = false,
+    },
+    AnimalFat = {
+        name = "Animal Fat",
+        color = Color(200, 60, 60),
+        image = "materials/items/resources/animal_fat.png",
+        func = function(ply) end,
+        weapon = nil,
+        Max = 200,
+        wModel = "models/environment/misc/loot_bag.mdl",
+        Craftable = true,
+        BluePrint = false,
+    },
+    Cloth = {
+        name = "Cloth",
+        color = Color(200, 60, 60),
+        image = "materials/items/resources/cloth.png",
+        func = function(ply) end,
+        weapon = nil,
+        Max = 500,
+        wModel = "models/environment/misc/loot_bag.mdl",
+        Craftable = true,
+        BluePrint = false,
+    },
+    SalavedSword = {
+        name = "Salvaged Cleaver",
+        color = Color(200, 60, 60),
+        image = "materials/items/weapons/salvaged_cleaver.png",
+        func = function(ply) ply:Give("rust_salvagedcleaver") end,
+        weapon = "rust_salvagedcleaver",
+        Max = 1,
         wModel = "models/environment/misc/loot_bag.mdl",
         Craftable = true,
         BluePrint = false,

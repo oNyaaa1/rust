@@ -19,7 +19,7 @@ ITEMS:RegisterItem("LowGradeFueld", {
                     AMOUNT = 20,
                 },
                 {
-                    ITEM = "Animal Fat",
+                    ITEM = "AnimalFat",
                     AMOUNT = 30
                 }
             },

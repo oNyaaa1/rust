@@ -39,11 +39,6 @@ if SERVER then
 		local toAmount = 0
 		local toTime = 30
 		local item = ITEMS:GetItem(tbl[1].Info)
-		if ConVarAdmin:GetInt() == 1 and ply:IsAdmin() then
-			AddItemsToGmod(ply, "Inventory", 1, item["InfoTag"], math.random(50, 60), item["Weapon"], item["StackSize"])
-			return
-		end
-
 		for k, v in pairs(item:Craft()) do
 			local itemz = v[1]
 			toCraft = itemz.ITEM
@@ -51,12 +46,33 @@ if SERVER then
 			toTime = v.Time
 		end
 
+		if ConVarAdmin:GetInt() == 1 and ply:IsAdmin() then
+			AddItemsToGmodCount(ply, item["InfoTag"], math.random(50, 60), tbl[2].Weapon, item["StackSize"])
+			--AddItemsToGmod(ply, "Inventory", 1, item["InfoTag"], math.random(50, 60), item["Weapon"], item["StackSize"])
+			for k, v in pairs(item:Craft()) do
+				print(k, v)
+				for items, itemData in pairs(v) do
+					if isnumber(items) then GInv_RemoveItem(ply, v[items].ITEM, v[items].AMOUNT) end
+				end
+				--
+			end
+			return
+		end
+
 		local bool, amount = CalcItem(ply, toCraft)
 		if amount < toAmount then return end
 		local id = ply:SteamID64()
 		Queues[id] = Queues[id] or {}
 		if #Queues[id] >= MAX_QUEUE then return end
-		GInv_RemoveItem(ply, toCraft, toAmount)
+		AddItemsToGmodCount(ply, item["InfoTag"], math.random(50, 60), item["Weapon"], item["StackSize"])
+		for k, v in pairs(item:Craft()) do
+			print(k, v)
+			for items, itemData in pairs(v) do
+				if isnumber(items) then GInv_RemoveItem(ply, v[items].ITEM, v[items].AMOUNT) end
+			end
+			--
+		end
+
 		table.insert(Queues[id], {
 			item = item,
 			time = toTime

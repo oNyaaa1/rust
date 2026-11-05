@@ -7,6 +7,7 @@ if SERVER then
     -- style: "pickup" (green) | "effect" (blue) | "info" (olive)
     -- duration: seconds, 0 = stays until RustNotifyRemove
     function RustNotify(ply, id, text, value, style, duration, icon)
+        if not IsValid(ply) then return end
         net.Start("RustNotify")
         net.WriteString(id or text)
         net.WriteString(text or "")
@@ -18,6 +19,7 @@ if SERVER then
     end
 
     function RustNotifyRemove(ply, id)
+        if not IsValid(ply) then return end
         net.Start("RustNotify")
         net.WriteString(id)
         net.WriteString("")

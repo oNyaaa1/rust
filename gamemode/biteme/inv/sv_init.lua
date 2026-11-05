@@ -248,6 +248,7 @@ function AddItemsToGmodCount(ply, name, dur, wep, amount)
         if not AddItemsToGmod(ply, cont, slot, name, dur, wep, amount) then return false end
     end
 
+    if wep ~= nil and def and def.func then def.func(ply) end
     SendInv(ply)
     return true
 end

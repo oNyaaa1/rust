@@ -1,6 +1,7 @@
-ITEMS:RegisterItem("rust_salvagedcleaver", {
+ITEMS:RegisterItem("SalavedSword", {
     Name = "Salvaged Cleaver",
     Info = "Killing, Havesting",
+    InfoTag = "SalavedSword",
     Category = "Weapons",
     model = "materials/items/weapons/salvaged_cleaver.png",
     Weapon = "rust_salvagedcleaver",
@@ -13,8 +14,8 @@ ITEMS:RegisterItem("rust_salvagedcleaver", {
                 Time = 0,
                 CanCraft = false,
                 {
-                    ITEM = "Cloth",
-                    AMOUNT = 0,
+                    ITEM = "MetalOre",
+                    AMOUNT = 50,
                 },
             },
         }

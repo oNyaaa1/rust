@@ -497,7 +497,7 @@ ITEMS:RegisterItem("GarageDoor", {
                 Time = 0,
                 CanCraft = false,
                 {
-                    ITEM = "Cloth",
+                    ITEM = "MetalOre",
                     AMOUNT = 0,
                 },
             },

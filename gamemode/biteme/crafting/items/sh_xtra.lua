@@ -40,7 +40,7 @@ ITEMS:RegisterItem("AnimalFat", {
                 Time = 0,
                 CanCraft = false,
                 {
-                    ITEM = "Animal Fat",
+                    ITEM = "AnimalFat",
                     AMOUNT = 0,
                 },
             },

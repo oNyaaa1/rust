@@ -16,7 +16,7 @@ ITEMS:RegisterItem("Furnace", {
                     AMOUNT = 0,
                 },
                 {
-                    ITEM = "Low Grade Fuel",
+                    ITEM = "LowGradeFueld",
                     AMOUNT = 0,
                 },
             },
@@ -41,7 +41,7 @@ ITEMS:RegisterItem("rust_deploy_smalloil", {
                     AMOUNT = 250,
                 },
                 {
-                    ITEM = "Low Grade Fuel",
+                    ITEM = "LowGradeFueld",
                     AMOUNT = 150,
                 },
             },
