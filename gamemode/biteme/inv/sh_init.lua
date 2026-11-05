@@ -18,6 +18,8 @@ if SERVER then
         ["rust_tc"] = "ToolCupboard",
         ["sent_door"] = "WoodDeployDoor",
         ["sent_metal_door"] = "MetalDeployDoor",
+        ["sent_arm_door"] = "ArmouredDeployDoor",
+        ["rust_keylock"] = "KeyLock"
     }
 
     net.Receive("GarageDoorPlaceL", function(len, ply)
@@ -25,8 +27,7 @@ if SERVER then
         local pos, ang, name = DEPLOY:GetSocket(ply, bang)
         if name ~= "doorwayl" and IDS[bang] == "GarageDoor" then return end
         if name ~= "sent_foundation" and IDS[bang] == "ToolCupboard" then return end
-        DEPLOY.FItem(ply, bang, pos, ang)
-        print(bang, IDS[bang])
+        DEPLOY:SetSocket(ply, bang, pos, ang)
         GInv_RemoveItem(ply, IDS[bang], 1)
         SendInv(ply)
     end)
@@ -229,6 +230,44 @@ RustOfficial.ITEMS = {
                 net.Start("SendClientinfoGDL")
                 net.WriteBool(true)
                 net.WriteString("sent_metal_door")
+                net.Send(ply)
+            end
+        end,
+        weapon = nil,
+        Max = 1,
+        wModel = "models/environment/misc/loot_bag.mdl",
+        Craftable = true,
+        BluePrint = false,
+    },
+    ArmouredDeployDoor = {
+        name = "Armoured Door",
+        color = Color(200, 60, 60),
+        image = "materials/items/deployable/armored_door.png",
+        func = function(ply)
+            if SERVER then
+                ply.SelectedGarageDoor = nil
+                net.Start("SendClientinfoGDL")
+                net.WriteBool(true)
+                net.WriteString("sent_arm_door")
+                net.Send(ply)
+            end
+        end,
+        weapon = nil,
+        Max = 1,
+        wModel = "models/environment/misc/loot_bag.mdl",
+        Craftable = true,
+        BluePrint = false,
+    },
+    KeyLock = {
+        name = "KeyLock",
+        color = Color(200, 60, 60),
+        image = "materials/items/deployable/keylock.png",
+        func = function(ply)
+            if SERVER then
+                ply.SelectedGarageDoor = nil
+                net.Start("SendClientinfoGDL")
+                net.WriteBool(true)
+                net.WriteString("rust_keylock")
                 net.Send(ply)
             end
         end,

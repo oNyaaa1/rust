@@ -7,7 +7,7 @@ ITEMS:RegisterItem("ToolCupboard", {
     Weapon = "rust_deploy_tc",
     Count = 50,
     Stackable = true,
-    StackSize = 150,
+    StackSize = 1,
     IzAdmin = true,
     Craft = function()
         return {
@@ -57,7 +57,7 @@ ITEMS:RegisterItem("MetalDeployDoor", {
     Weapon = nil,
     Count = 50,
     Stackable = true,
-    StackSize = 150,
+    StackSize = 1,
     IzAdmin = true,
     Craft = function()
         return {
@@ -73,15 +73,16 @@ ITEMS:RegisterItem("MetalDeployDoor", {
     end,
 }, "Construction")
 
-ITEMS:RegisterItem("rust_deploy_doorway_armoredd", {
+ITEMS:RegisterItem("ArmouredDeployDoor", {
     Name = "Armored Door",
     Info = "Armored Door For the door frame",
+    InfoTag = "ArmouredDeployDoor",
     Category = "Construction",
     model = "materials/items/deployable/armored_door.png",
-    Weapon = "rust_deploy_doorway_armoredd",
+    Weapon = nil,
     Count = 50,
     Stackable = true,
-    StackSize = 150,
+    StackSize = 1,
     IzAdmin = true,
     Craft = function()
         return {
@@ -97,15 +98,16 @@ ITEMS:RegisterItem("rust_deploy_doorway_armoredd", {
     end,
 }, "Construction")
 
-ITEMS:RegisterItem("rust_deploy_lock", {
+ITEMS:RegisterItem("KeyLock", {
     Name = "Key Lock",
     Info = "Key locks used lock doors",
+    InfoTag = "KeyLock",
     Category = "Construction",
     model = "materials/items/deployable/keylock.png",
-    Weapon = "rust_deploy_lock",
+    Weapon = nil,
     Count = 50,
     Stackable = true,
-    StackSize = 150,
+    StackSize = 1,
     IzAdmin = true,
     Craft = function()
         return {

@@ -17,6 +17,7 @@ DEPLOY.AllowedOn = {
         sent_stairs = true,
         sent_wall = true,
         sent_door = true,
+        sent_arm_door = true,
         sent_doorway = true,
         sent_ceiling = true,
         sent_foundation = false,
@@ -29,6 +30,7 @@ DEPLOY.AllowedOn = {
         sent_wall = true,
         sent_door = true,
         sent_doorway = true,
+        sent_arm_door = true,
         sent_ceiling = true,
         sent_foundation = false,
         sent_doorwayl = true,
@@ -39,6 +41,7 @@ DEPLOY.AllowedOn = {
         sent_garagedoor = true,
         sent_doorwayl = false,
         sent_wall = false,
+        sent_arm_door = true,
         sent_door = false,
         sent_hwall = false,
         sent_metal_door = true,
@@ -50,6 +53,7 @@ DEPLOY.ClassDist = {
     sent_wall = 72.9, -- half width = the edge
     sent_door = 72.9,
     sent_metal_door = 72.9,
+    sent_arm_door = 72.9,
     sent_doorway = 72.9,
     sent_stairs = 0,
     sent_ceiling = 0,
@@ -63,6 +67,7 @@ DEPLOY.ClassRot = {
     sent_foundation = 0,
     sent_wall = 90,
     sent_hwall = 90,
+    sent_arm_door = 90,
     sent_door = 90,
     sent_metal_door = 90,
     sent_doorway = 90,
@@ -84,6 +89,7 @@ DEPLOY.ClassZ = {
     sent_wall = 0,
     sent_hwall = 0,
     sent_door = 0,
+    sent_arm_door = 0,
     sent_metal_door = 0,
     sent_doorway = 0,
     sent_stairs = 0,
@@ -115,6 +121,7 @@ DEPLOY.CeilingZ = {
     sent_stairs = 0,
     sent_wall = 0,
     sent_door = 0,
+    sent_arm_door = 0,
     sent_doorway = 0,
     sent_ceiling = 128,
     sent_garagedoor = 0,
@@ -140,6 +147,7 @@ DEPLOY.BaseClasses = {
 DEPLOY.ClassSide = {
     sent_door = -25, -- start at 0, then nudge until it sits in the middle of the frame
     sent_metal_door = -25,
+    sent_arm_door = -25,
 }
 
 DEPLOY.GarageOffset = Vector(0, 0, 0)
@@ -226,6 +234,48 @@ function DEPLOY:SetSocket(ply, class, pos, ang)
         end
     end
 
+    if class == "sent_metal_door" then
+        local nearestDist = math.huge
+        for _, e in ipairs(ents.FindByClass("sent_doorway")) do
+            local d = pos:Distance(e:GetPos())
+            if d < nearestDist then doorway, nearestDist = e, d end
+        end
+
+        if not IsValid(doorway) or nearestDist > 80 then return end
+        if IsValid(doorway.Door) then -- already has a door
+            return
+        end
+    end
+
+    if class == "sent_arm_door" then
+        local nearestDist = math.huge
+        for _, e in ipairs(ents.FindByClass("sent_doorway")) do
+            local d = pos:Distance(e:GetPos())
+            if d < nearestDist then doorway, nearestDist = e, d end
+        end
+
+        if not IsValid(doorway) or nearestDist > 80 then return end
+        if IsValid(doorway.Door) then -- already has a door
+            return
+        end
+    end
+
+    local doorTarget
+    if class == "rust_keylock" then
+        local nearestDist = math.huge
+        for _, cls in ipairs({"sent_door", "sent_metal_door", "sent_arm_door"}) do
+            for _, e in ipairs(ents.FindByClass(cls)) do
+                local d = pos:Distance(e:GetPos())
+                if d < nearestDist then doorTarget, nearestDist = e, d end
+            end
+        end
+
+        if not IsValid(doorTarget) or nearestDist > 150 or doorTarget:GetNWBool("HasLock") then
+            print("keylock rejected", doorTarget, nearestDist)
+            return
+        end
+    end
+
     local ent = ents.Create(class)
     if not IsValid(ent) then return end
     ent:SetPos(pos)
@@ -233,6 +283,13 @@ function DEPLOY:SetSocket(ply, class, pos, ang)
     ent:Spawn()
     ent:Activate()
     if IsValid(doorway) then doorway.Door = ent end
+    if IsValid(doorTarget) then
+        doorTarget.Lock = ent
+        doorTarget:SetNWBool("HasLock", true)
+        ent:SetParent(doorTarget) -- follows the door when it opens
+        ent:EmitSound("doors/keypad_deploy.wav")
+    end
+
     ply.Sockets[#ply.Sockets + 1] = {pos, class}
     return ent
 end
@@ -268,6 +325,7 @@ DEPLOY.SkipUpper = {
     sent_doorwayl = true,
     sent_garagedoor = true,
     sent_hwall = false,
+    rust_keylock = true,
 }
 
 DEPLOY.SkipUpper = DEPLOY.SkipUpper or {}
@@ -313,6 +371,8 @@ function DEPLOY:HasGroundSupport(pos, ang)
     return true, lowZ, highZ
 end
 
+DEPLOY.KeylockOffset = Vector(49.11, 2.08, 45.4)
+DEPLOY.KeylockAngle = Angle(0, 0, 0)
 function DEPLOY:GetSocket(ply, class)
     if not IsValid(ply) then return end
     class = string.lower(class or "")
@@ -363,6 +423,14 @@ function DEPLOY:GetSocket(ply, class)
         end
 
         if not IsValid(base) then return fallbackPos, fallbackAng, "none", tr.Entity end
+    end
+
+    if class == "rust_keylock" then
+        local fnd = string.find(ent:GetClass(), "door", 1)
+        local door = IsValid(ent) and fnd and ent
+        if not door or door:GetNWBool("HasLock") then return fallbackPos, fallbackAng, "none", tr.Entity end
+        local pos, ang = LocalToWorld(self.KeylockOffset, self.KeylockAngle, door:GetPos(), door:GetAngles())
+        return pos, ang, "door", door
     end
 
     local baseClass = base:GetClass()
