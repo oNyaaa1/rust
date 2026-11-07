@@ -61,6 +61,8 @@ end ]]
 		if ply.Meh == nil then ply.Meh = 0 end
 		if ply.Meh >= CurTime() then return end
 		ply.Meh = CurTime() + 0.2
+		local lock = self.CodeLock
+		if IsValid(lock) and lock:GetLocked() and not lock:HasAccess(ply) then return end
 		if self.DoorOpen == false then
 			self.DoorPos = self:GetAngles()
 			self.DoorPosa = self:GetPos()

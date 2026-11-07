@@ -123,9 +123,10 @@ ITEMS:RegisterItem("KeyLock", {
     end,
 }, "Construction")
 
-ITEMS:RegisterItem("rust_deploy_codelock", {
+ITEMS:RegisterItem("KeyPad", {
     Name = "Keypad",
     Info = "Keypad used lock doors",
+    InfoTag = "KeyPad",
     Category = "Construction",
     model = "materials/items/deployable/keypad.png",
     Weapon = "rust_deploy_codelock",
@@ -147,12 +148,13 @@ ITEMS:RegisterItem("rust_deploy_codelock", {
     end,
 }, "Construction")
 
-ITEMS:RegisterItem("rust_deploy_wooddd", {
-    Name = "Wood Double Door",
-    Info = "Wood Double Door",
+ITEMS:RegisterItem("DoubleDoorMetal", {
+    Name = "Metal Double Door",
+    Info = "Metal Double Door",
+    InfoTag = "DoubleDoorMetal",
     Category = "Construction",
-    model = "materials/items/deployable/wood_double_door.png",
-    Weapon = "rust_deploy_wooddd",
+    model = "materials/items/deployable/sheet_metal_double_door.png",
+    Weapon = nil,
     Count = 50,
     Stackable = true,
     StackSize = 150,

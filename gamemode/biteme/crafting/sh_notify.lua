@@ -161,11 +161,3 @@ hook.Add("HUDPaint", "RustNotify_Draw", function()
         if val ~= "" then draw.SimpleText(val, "RustNotify", x + w - S(6), y + h / 2, Color(255, 255, 255, 255 * a), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER) end
     end
 end)
-
--- test: type rn_test in console
-concommand.Add("rn_test", function()
-    Add("bandage", "Bandage", "1", "safeZone", 4, "")
-    Add("bandage_fx", "Bandage", "", "effect", 8, "")
-    Add("upkeep", "Upkeep Time", "33 hrs", "info", 0, "")
-    Add("bp", "Building Privilege", "", "info", 0, "icon16/box.png")
-end)

@@ -5,6 +5,7 @@ ENT.PrintName = "Door"
 ENT.Category = ""
 ENT.Spawnable = true
 ENT.AdminOnly = false
+ENT.Models = "models/deployable/metal_double_door.mdl"
 if SERVER then
 	function ENT:Initialize()
 		self:SetModel("models/deployable/metal_double_door.mdl")
@@ -16,13 +17,13 @@ if SERVER then
 		self.LftDoor = ents.Create("door_metal_left")
 		self.LftDoor:Spawn()
 		self.LftDoor:Activate()
-		self.LftDoor:SetPos(self:LocalToWorld(Vector(-50.3, 0, 5)))
+		self.LftDoor:SetPos(self:LocalToWorld(Vector(-60.3, 0, 5)))
 		self.LftDoor:SetAngles(self:GetAngles() + Angle(0, 0, 0))
 		self.LftDoor:SetParent(self)
 		self.RghtDoor = ents.Create("door_metal_right")
 		self.RghtDoor:Spawn()
 		self.RghtDoor:Activate()
-		self.RghtDoor:SetPos(self:LocalToWorld(Vector(50, 0, 5)))
+		self.RghtDoor:SetPos(self:LocalToWorld(Vector(60, 0, 5)))
 		self.RghtDoor:SetAngles(self:GetAngles() + Angle(0, -180, 0))
 		self.RghtDoor:SetParent(self)
 		--constraint.Weld(self, Entity(0), 0, 0, 0, true, true)
@@ -80,14 +81,11 @@ end ]]
 	end
 
 	function ENT:Use(btn, ply)
-		if self.Lock == ply then return end
 		if ply.Meh == nil then ply.Meh = 0 end
 		if ply.Meh >= CurTime() then return end
 		ply.Meh = CurTime() + 0.2
-		--if self.PropOwned ~= ply then
-		--ply:ChatPrint("Door is locked")
-		--return
-		--end
+		local lock = self.CodeLock
+		if IsValid(lock) and lock:GetLocked() and not lock:HasAccess(ply) then return end
 		if self.DoorOpen == false then
 			self.LftDoorAngle = self:GetAngles()
 			self.DoorOpen = true
@@ -111,7 +109,22 @@ if CLIENT then
 	function ENT:Initialize()
 	end
 
-	function ENT:Draw()
-		self:DrawModel()
+	-- Draw some 3D text
+	function ENT:Draw(flags)
+		-- Draw the model
+		self:DrawModel(flags)
+		local DOOR_H = 130 -- target height, tune until the top touches the lintel
+		local mins, maxs = self:OBBMins(), self:OBBMaxs()
+		local sz = maxs.z - mins.z
+		if sz <= 0 then return end
+		local kz = DOOR_H / sz
+		-- bottom stays fixed, extra height grows upward
+		local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
+		local m = Matrix()
+		m:Translate(pivot)
+		m:Scale(Vector(1.3, 1, kz)) -- this is the line that was missing
+		m:Translate(-pivot)
+		self:EnableMatrix("RenderMultiply", m)
+		self:SetRenderBounds(Vector(mins.x, mins.y, mins.z), Vector(maxs.x, maxs.y, mins.z + sz * kz))
 	end
 end

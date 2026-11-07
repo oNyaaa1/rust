@@ -15,17 +15,20 @@ if SERVER then
     local IDS = {
         ["rust_furnace"] = "Furnace",
         ["sent_garagedoor"] = "GarageDoor",
+        ["sent_door_dd_metal"] = "DoubleDoorMetal",
         ["rust_tc"] = "ToolCupboard",
         ["sent_door"] = "WoodDeployDoor",
         ["sent_metal_door"] = "MetalDeployDoor",
         ["sent_arm_door"] = "ArmouredDeployDoor",
-        ["rust_keylock"] = "KeyLock"
+        ["rust_keylock"] = "KeyLock",
+        ["rust_keypad"] = "KeyPad"
     }
 
     net.Receive("GarageDoorPlaceL", function(len, ply)
         local bang = net.ReadString()
         local pos, ang, name = DEPLOY:GetSocket(ply, bang)
         if name ~= "doorwayl" and IDS[bang] == "GarageDoor" then return end
+        if name ~= "doorwayl" and IDS[bang] == "DoubleDoorMetal" then return end
         if name ~= "sent_foundation" and IDS[bang] == "ToolCupboard" then return end
         DEPLOY:SetSocket(ply, bang, pos, ang)
         GInv_RemoveItem(ply, IDS[bang], 1)
@@ -51,7 +54,7 @@ RustOfficial.ITEMS = {
         image = "materials/items/resources/charcoal.png",
         func = function(ply) end,
         weapon = nil,
-        Max = 1,
+        Max = 2000,
         wModel = "models/environment/misc/loot_bag.mdl",
         Craftable = true,
         BluePrint = false,
@@ -62,7 +65,7 @@ RustOfficial.ITEMS = {
         image = "materials/items/resources/sulfur.png",
         func = function(ply) end,
         weapon = nil,
-        Max = 1,
+        Max = 2000,
         wModel = "models/environment/misc/loot_bag.mdl",
         Craftable = true,
         BluePrint = false,
@@ -73,7 +76,7 @@ RustOfficial.ITEMS = {
         image = "materials/items/resources/metal_fragments.png",
         func = function(ply) end,
         weapon = nil,
-        Max = 1,
+        Max = 2000,
         wModel = "models/environment/misc/loot_bag.mdl",
         Craftable = false,
         BluePrint = false,
@@ -103,7 +106,7 @@ RustOfficial.ITEMS = {
             end
         end,
         weapon = nil,
-        Max = 1000,
+        Max = 1,
         wModel = "models/environment/misc/loot_bag.mdl",
         Craftable = true,
         BluePrint = true,
@@ -114,7 +117,7 @@ RustOfficial.ITEMS = {
         image = "materials/items/misc/blueprint.png",
         func = function(ply) ply:Give("rust_builder") end,
         weapon = "rust_builder",
-        Max = 1000,
+        Max = 1,
         wModel = "models/weapons/darky_m/rust/w_buildingplan.mdl",
         Craftable = true,
         BluePrint = false,
@@ -239,6 +242,25 @@ RustOfficial.ITEMS = {
         Craftable = true,
         BluePrint = false,
     },
+    DoubleDoorMetal = {
+        name = "Double Metal Door",
+        color = Color(200, 60, 60),
+        image = "materials/items/deployable/sheet_metal_double_door.png",
+        func = function(ply)
+            if SERVER then
+                ply.SelectedGarageDoor = nil
+                net.Start("SendClientinfoGDL")
+                net.WriteBool(true)
+                net.WriteString("sent_door_dd_metal")
+                net.Send(ply)
+            end
+        end,
+        weapon = nil,
+        Max = 1,
+        wModel = "models/environment/misc/loot_bag.mdl",
+        Craftable = true,
+        BluePrint = false,
+    },
     ArmouredDeployDoor = {
         name = "Armoured Door",
         color = Color(200, 60, 60),
@@ -268,6 +290,25 @@ RustOfficial.ITEMS = {
                 net.Start("SendClientinfoGDL")
                 net.WriteBool(true)
                 net.WriteString("rust_keylock")
+                net.Send(ply)
+            end
+        end,
+        weapon = nil,
+        Max = 1,
+        wModel = "models/environment/misc/loot_bag.mdl",
+        Craftable = true,
+        BluePrint = false,
+    },
+    KeyPad = {
+        name = "KeyPad",
+        color = Color(200, 60, 60),
+        image = "materials/items/deployable/keypad.png",
+        func = function(ply)
+            if SERVER then
+                ply.SelectedGarageDoor = nil
+                net.Start("SendClientinfoGDL")
+                net.WriteBool(true)
+                net.WriteString("rust_keypad")
                 net.Send(ply)
             end
         end,

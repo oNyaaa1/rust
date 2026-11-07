@@ -68,6 +68,8 @@ if SERVER then
 			return
 		end
 
+		local lock = self.CodeLock
+		if IsValid(lock) and lock:GetLocked() and not lock:HasAccess(ply) then return end
 		self:SetGarageDoor(open)
 		local seq = self:LookupSequence(open and "open" or "close")
 		if open then

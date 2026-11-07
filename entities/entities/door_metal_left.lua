@@ -5,6 +5,7 @@ ENT.PrintName = "Door left"
 ENT.Category = ""
 ENT.Spawnable = true
 ENT.AdminOnly = false
+ENT.CodeLockable = true
 if SERVER then
 	function ENT:Initialize()
 		self:SetModel("models/darky_m/rust/metal_door_l.mdl")
@@ -56,23 +57,6 @@ end ]]
 	end
 
 	function ENT:Use(btn, ply)
-		if ply.Meh == nil then ply.Meh = 0 end
-		if ply.Meh >= CurTime() then return end
-		ply.Meh = CurTime() + 0.2
-		--if self.PropOwned ~= ply then
-		--ply:ChatPrint("Door is locked")
-		--return
-		--end
-		if self.DoorOpen == false then
-			self.DoorPos = self:GetAngles()
-			self.DoorPosa = self:GetPos()
-			--self:SetPos(self:GetPos() + ply:GetForward() + Vector(28, 25, 7))
-			self.DoorOpen = true
-		elseif self.DoorOpen == true then
-			--self:SetPos(self.DoorPosa)
-			--self:SetAngles(self.DoorPos)
-			self.DoorOpen = false
-		end
 	end
 end
 
@@ -81,7 +65,22 @@ if CLIENT then
 	function ENT:Initialize()
 	end
 
-	function ENT:Draw()
-		self:DrawModel()
+	-- Draw some 3D text
+	function ENT:Draw(flags)
+		-- Draw the model
+		self:DrawModel(flags)
+		local DOOR_H = 100 -- target height, tune until the top touches the lintel
+		local mins, maxs = self:OBBMins(), self:OBBMaxs()
+		local sz = maxs.z - mins.z
+		if sz <= 0 then return end
+		local kz = DOOR_H / sz
+		-- bottom stays fixed, extra height grows upward
+		local pivot = Vector((mins.x + maxs.x) / 2, (mins.y + maxs.y) / 2, mins.z)
+		local m = Matrix()
+		m:Translate(pivot)
+		m:Scale(Vector(1.4, 1, kz)) -- this is the line that was missing
+		m:Translate(-pivot)
+		self:EnableMatrix("RenderMultiply", m)
+		self:SetRenderBounds(Vector(mins.x, mins.y, mins.z), Vector(maxs.x, maxs.y, mins.z + sz * kz))
 	end
 end
